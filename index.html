@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Contenido Falso</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato&family=Lobster&family=Merriweather&family=Montserrat&family=Open+Sans&family=Oswald&family=Pacifico&family=Playfair+Display&family=Raleway&family=Roboto&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Generador de Contenido</h1>
+        </header>
+        <main>
+            <div class="tabs-container">
+                <button id="tab-chat-generator" class="tab-btn active">Generador de Chats</button>
+                <button id="tab-post-generator" class="tab-btn">Generador de Posts (Texto)</button>
+                <button id="tab-image-post-generator" class="tab-btn">Generador Posts con Imagen</button>
+            </div>
+
+            <div class="api-key-container">
+                <div class="form-group hidden" id="api-key-group">
+                    <label for="api-key">Tu Clave API de Google AI Studio</label>
+                    <input type="password" id="api-key" placeholder="Introduce tu clave API aquí">
+                    <p class="api-key-note">Tu clave se guarda localmente en tu navegador. <a href="https://aistudio.google.com/app/apikey" target="_blank">Obtén tu clave aquí.</a></p>
+                </div>
+                <button type="button" id="change-api-key-btn" class="hidden">Usar otra Clave API</button>
+            </div>
+
+            <!-- Vista del Generador de Chats -->
+            <div id="chat-generator-view">
+                <form id="chat-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="persona1-desc">Descripción Persona 1 (Receptor)</label>
+                            <input type="text" id="persona1-desc" placeholder="Opcional. Ej: Un padre preocupado">
+                        </div>
+                        <div class="form-group">
+                            <label for="persona2-desc">Descripción Persona 2 (Emisor)</label>
+                            <input type="text" id="persona2-desc" placeholder="Opcional. Ej: Un adolescente rebelde">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="topic">Tema de la Conversación</label>
+                        <input type="text" id="topic" placeholder="Ej: Planear una fiesta sorpresa" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="background-upload">Fondo de Pantalla (Opcional)</label>
+                            <label for="background-upload" class="file-upload-label">Subir Imagen de Fondo</label>
+                            <input type="file" id="background-upload" class="file-upload-input" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label>Marca de Agua (Opcional)</label>
+                            <div class="watermark-controls">
+                                <div class="watermark-tabs">
+                                    <button type="button" id="watermark-text-tab" class="active" title="Usar texto como marca de agua">Texto</button>
+                                    <button type="button" id="watermark-image-tab" title="Usar imagen como marca de agua">Imagen</button>
+                                </div>
+                                <div id="watermark-text-options">
+                                    <input type="text" id="watermark-text" placeholder="Escribe tu texto">
+                                    <input type="color" id="watermark-color" value="#000000" title="Color del texto">
+                                </div>
+                                <div id="watermark-image-options" class="hidden">
+                                    <label for="watermark-upload" class="file-upload-label">Subir Imagen de Marca</label>
+                                    <input type="file" id="watermark-upload" class="file-upload-input" accept="image/*">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="watermark-size">Tamaño:</label>
+                                    <input type="range" id="watermark-size" min="10" max="100" value="30" title="Ajustar tamaño">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="watermark-opacity">Opacidad:</label>
+                                    <input type="range" id="watermark-opacity" min="0" max="100" value="50" title="Ajustar opacidad">
+                                </div>
+                                <button type="button" id="remove-watermark-btn" title="Quitar la marca de agua">Quitar Marca</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tone">Tono</label>
+                            <select id="tone">
+                                <option value="polémico">Polémico</option>
+                                <option value="sarcástico/irónico">Sarcástico/Irónico</option>
+                                <option value="cómico/chistoso" selected>Cómico/Chistoso</option>
+                                <option value="dramático">Dramático</option>
+                                <option value="profesional/corporativo">Profesional/Corporativo</option>
+                                <option value="tierno/cariñoso">Tierno/Cariñoso</option>
+                                <option value="misterioso/suspenso">Misterioso/Suspenso</option>
+                                <option value="filosófico/profundo">Filosófico/Profundo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="style">Estilo de Escritura</label>
+                            <select id="style">
+                                <option value="informal con errores ortográficos de ambos lados">Informal (errores en ambos)</option>
+                                <option value="informal, una persona con errores y la otra no">Informal (errores en uno)</option>
+                                <option value="formal sin errores ortográficos">Formal (sin errores)</option>
+                                <option value="usando abreviaturas y jerga de internet">Con jerga de internet</option>
+                                <option value="como personas mayores usando la tecnología">Como personas mayores</option>
+                                <option value="con respuestas muy cortas y cortantes">Cortante y directo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="length">Longitud</label>
+                            <select id="length">
+                                <option value="corta (4-6 mensajes)" selected>Corta (4-6)</option>
+                                <option value="mediana (8-12 mensajes)">Mediana (8-12)</option>
+                                <option value="larga (15-20 mensajes)">Larga (15-20)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="emojis">Emojis</label>
+                            <select id="emojis">
+                                <option value="con emojis" selected>Con Emojis</option>
+                                <option value="sin emojis">Sin Emojis</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="starter">Quién Inicia</label>
+                            <select id="starter">
+                                <option value="Persona 2" selected>Emisor (Yo)</option>
+                                <option value="Persona 1">Receptor (Otro)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-container">
+                        <button type="submit" id="generate-btn">Generar Chat</button>
+                        <button type="button" id="download-full-btn" class="download-button hidden">Descargar Captura Completa</button>
+                        <button type="button" id="download-chat-only-btn" class="download-button hidden">Descargar Solo Chat</button>
+                    </div>
+                </form>
+                <div id="chat-window">
+                    <div id="chat-header">
+                        <svg class="header-icon" id="back-arrow" width="24" height="24" viewBox="0 0 24 24"><path fill="white" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                        <div id="profile-pic-container" title="Haz clic para cambiar la foto">
+                            <svg id="default-profile-icon" width="40" height="40" viewBox="0 0 24 24" fill="#FFF"><path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"/></svg>
+                            <img id="profile-pic-img" src="" alt="Foto de perfil">
+                            <input type="file" id="profile-pic-upload" accept="image/*">
+                        </div>
+                        <div id="contact-info">
+                            <span id="contact-name">Mamá</span>
+                            <span id="contact-status">en línea</span>
+                        </div>
+                        <div id="header-actions">
+                            <svg class="header-icon" width="24" height="24" viewBox="0 0 24 24"><path fill="white" d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" /></svg>
+                            <svg class="header-icon" width="24" height="24" viewBox="0 0 24 24"><path fill="white" d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" /></svg>
+                            <svg class="header-icon" width="24" height="24" viewBox="0 0 24 24"><path fill="white" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" /></svg>
+                        </div>
+                    </div>
+                    <div id="chat-messages">
+                        <div class="placeholder">Tu chat generado aparecerá aquí...</div>
+                    </div>
+                    <div id="watermark-overlay" class="hidden"></div>
+                    <div id="loader" class="hidden">
+                        <div class="spinner"></div>
+                        <p>Generando conversación...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista del Generador de Posts (Texto) -->
+            <div id="post-generator-view" class="hidden">
+                <div class="post-generator-layout">
+                    <div class="post-controls">
+                        <h3>1. Elige una Plantilla</h3>
+                        <div class="template-selector">
+                            <button id="template-btn-facebook" class="template-btn active">Facebook (Cuadrado)</button>
+                            <button id="template-btn-twitter" class="template-btn">Twitter (Rectangular)</button>
+                        </div>
+                        
+                        <div id="facebook-options-container" class="form-group hidden">
+                             <label class="checkbox-label">
+                                <input type="checkbox" id="toggle-verified-badge-facebook" checked>
+                                Mostrar insignia de verificación
+                            </label>
+                        </div>
+                        <div id="twitter-options-container" class="form-group hidden">
+                             <label class="checkbox-label">
+                                <input type="checkbox" id="toggle-verified-badge-twitter" checked>
+                                Mostrar insignia de verificación
+                            </label>
+                        </div>
+
+                        <h3>2. Alineación de Texto</h3>
+                        <div id="text-align-selector" class="template-selector">
+                            <button class="align-btn active" data-align="left" title="Alinear a la Izquierda">
+                                <svg viewBox="0 0 24 24"><path d="M3,4H21V6H3V4M3,9H15V11H3V9M3,14H21V16H3V14M3,19H15V21H3V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="center" title="Centrar">
+                                <svg viewBox="0 0 24 24"><path d="M7,9H17V11H7V9M3,4H21V6H3V4M3,14H21V16H3V14M7,19H17V21H7V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="right" title="Alinear a la Derecha">
+                                <svg viewBox="0 0 24 24"><path d="M9,9H21V11H9V9M3,4H21V6H3V4M3,14H21V16H3V14M9,19H21V21H9V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="justify" title="Justificar">
+                                <svg viewBox="0 0 24 24"><path d="M3,4H21V6H3V4M3,9H21V11H3V9M3,14H21V16H3V14M3,19H21V21H3V19Z" /></svg>
+                            </button>
+                        </div>
+
+                        <h3>3. Elige el Modo</h3>
+                        <div class="mode-selector">
+                            <button id="mode-manual-btn" class="mode-btn active" type="button">Manual (Pegar Textos)</button>
+                            <button id="mode-ai-btn" class="mode-btn" type="button">Generar con IA</button>
+                        </div>
+
+                        <div id="manual-input-container">
+                            <h3>4. Pega tus Textos</h3>
+                            <textarea id="post-texts-input" placeholder="Pega tus textos aquí. Un post por cada salto de línea..."></textarea>
+                        </div>
+
+                        <div id="ai-input-container" class="hidden">
+                            <h3>4. Define el Contenido</h3>
+                            <div class="form-group">
+                                <label for="ai-topic">Tema Principal</label>
+                                <input type="text" id="ai-topic" placeholder="Ej: Lanzamiento de nuevo café orgánico">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ai-tone">Tono</label>
+                                    <select id="ai-tone">
+                                        <option value="Profesional">Profesional</option>
+                                        <option value="Chistoso / Divertido" selected>Chistoso / Divertido</option>
+                                        <option value="Estilo Meme">Estilo Meme</option>
+                                        <option value="Polémico">Polémico</option>
+                                        <option value="Sarcástico / Irónico">Sarcástico / Irónico</option>
+                                        <option value="Dramático">Dramático</option>
+                                        <option value="Inspirador">Inspirador</option>
+                                        <option value="Urgente">Urgente</option>
+                                        <option value="Informativo">Informativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ai-quantity">Cantidad</label>
+                                    <input type="number" id="ai-quantity" value="3" min="1" max="10">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="generate-posts-btn">Generar Posts</button>
+                    </div>
+
+                    <div class="post-preview-area">
+                        <h3>5. Personaliza la Plantilla (Haz clic para editar)</h3>
+                        <div id="post-preview-container">
+                             <div id="post-preview-template" class="post-template facebook">
+                                <div class="post-header">
+                                    <div class="post-profile-pic" title="Haz clic para cambiar la foto">
+                                        <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3e%3c/path%3e%3c/svg%3e" alt="Avatar">
+                                        <input type="file" class="file-upload-input" id="post-profile-pic-upload" accept="image/*">
+                                    </div>
+                                    <div class="post-profile-info">
+                                        <div class="post-name-wrapper">
+                                            <span class="post-name">Nombre Apellido</span>
+                                            <svg class="facebook-verified-badge" viewBox="0 0 24 24" aria-label="Cuenta verificada" role="img"><g><path fill="rgb(25, 134, 242)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.03 15.42l-4.5-4.5 1.41-1.41 3.09 3.08 6.59-6.59 1.41 1.41-8 8z"></path></g></svg>
+                                            <svg class="twitter-verified-badge" viewBox="0 0 24 24" aria-label="Verified account" role="img"><g><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.33 2.34 5.23-5.23 1.42 1.42-6.65 6.65z"></path></g></svg>
+                                        </div>
+                                        <span class="post-username">@usuario</span>
+                                    </div>
+                                </div>
+                                <div class="post-body">
+                                    <p class="post-text align-left">Este es un texto de ejemplo para que puedas ver cómo se verá tu post final. ¡Edita la información de perfil y luego genera tus posts!</p>
+                                </div>
+                            </div>
+                        </div>
+                         <div id="post-results-area">
+                            <div class="results-header hidden">
+                                <h3>Resultados Generados</h3>
+                                <button id="download-all-zip-btn" class="download-button">Descargar Todo (.zip)</button>
+                            </div>
+                            <div id="results-grid">
+                                <!-- Las imágenes generadas aparecerán aquí -->
+                            </div>
+                            <div id="post-generator-loader" class="hidden">
+                                <div class="spinner"></div>
+                                <p>Generando imágenes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista del Generador de Posts con Imagen -->
+            <div id="image-post-generator-view" class="hidden">
+                <div class="post-generator-layout">
+                    <div class="post-controls">
+                        <h3>1. Sube tu Imagen Base</h3>
+                        <div class="form-group">
+                             <label for="image-post-base-upload" class="file-upload-label">Seleccionar Imagen</label>
+                             <input type="file" id="image-post-base-upload" class="file-upload-input" accept="image/*">
+                             <div id="image-post-thumbnail-container" class="hidden">
+                                 <img id="image-post-thumbnail" src="" alt="Miniatura de la imagen subida">
+                             </div>
+                        </div>
+
+                        <h3>2. Opciones de Plantilla</h3>
+                        <div class="form-group">
+                             <label class="checkbox-label">
+                                <input type="checkbox" id="toggle-image-post-header">
+                                Mostrar encabezado (perfil)
+                            </label>
+                        </div>
+                        <div id="image-post-header-options" class="hidden">
+                            <div class="template-selector">
+                                <button id="image-post-template-btn-facebook" class="template-btn active">Facebook</button>
+                                <button id="image-post-template-btn-twitter" class="template-btn">Twitter</button>
+                            </div>
+                             <div id="image-post-facebook-options" class="form-group">
+                                 <label class="checkbox-label">
+                                    <input type="checkbox" id="toggle-image-post-verified-facebook" checked>
+                                    Insignia de verificación
+                                </label>
+                            </div>
+                            <div id="image-post-twitter-options" class="form-group hidden">
+                                 <label class="checkbox-label">
+                                    <input type="checkbox" id="toggle-image-post-verified-twitter" checked>
+                                    Insignia de verificación
+                                </label>
+                            </div>
+                        </div>
+
+                        <h3>3. Personalización de Texto</h3>
+                        <div class="form-group">
+                            <label for="image-post-font-selector">Fuente del Título</label>
+                            <select id="image-post-font-selector">
+                                <option value="Roboto">Roboto</option>
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Lato">Lato</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Oswald">Oswald</option>
+                                <option value="Raleway">Raleway</option>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Merriweather">Merriweather</option>
+                                <option value="Lobster">Lobster</option>
+                                <option value="Pacifico">Pacifico</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                             <label>Estilo del Título</label>
+                            <div id="image-post-style-selector" class="template-selector">
+                                <button class="style-btn" data-style="bold" title="Negrita"><b>B</b></button>
+                                <button class="style-btn" data-style="italic" title="Cursiva"><i>I</i></button>
+                            </div>
+                        </div>
+                         <div id="image-post-text-align-selector" class="template-selector">
+                            <button class="align-btn" data-align="left" title="Alinear a la Izquierda">
+                                <svg viewBox="0 0 24 24"><path d="M3,4H21V6H3V4M3,9H15V11H3V9M3,14H21V16H3V14M3,19H15V21H3V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="center" title="Centrar">
+                                <svg viewBox="0 0 24 24"><path d="M7,9H17V11H7V9M3,4H21V6H3V4M3,14H21V16H3V14M7,19H17V21H7V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="right" title="Alinear a la Derecha">
+                                <svg viewBox="0 0 24 24"><path d="M9,9H21V11H9V9M3,4H21V6H3V4M3,14H21V16H3V14M9,19H21V21H9V19Z" /></svg>
+                            </button>
+                            <button class="align-btn" data-align="justify" title="Justificar">
+                                <svg viewBox="0 0 24 24"><path d="M3,4H21V6H3V4M3,9H21V11H3V9M3,14H21V16H3V14M3,19H21V21H3V19Z" /></svg>
+                            </button>
+                        </div>
+
+                        <h3>4. Marca de Agua (Opcional)</h3>
+                        <div class="form-group">
+                            <div class="watermark-controls">
+                                <div class="watermark-tabs">
+                                    <button type="button" id="image-post-watermark-text-tab" class="active" title="Usar texto como marca de agua">Texto</button>
+                                    <button type="button" id="image-post-watermark-image-tab" title="Usar imagen como marca de agua">Imagen</button>
+                                </div>
+                                <div id="image-post-watermark-text-options">
+                                    <input type="text" id="image-post-watermark-text" placeholder="Escribe tu texto">
+                                    <input type="color" id="image-post-watermark-color" value="#FFFFFF" title="Color del texto">
+                                </div>
+                                <div id="image-post-watermark-image-options" class="hidden">
+                                    <label for="image-post-watermark-upload" class="file-upload-label">Subir Imagen de Marca</label>
+                                    <input type="file" id="image-post-watermark-upload" class="file-upload-input" accept="image/*">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="image-post-watermark-size">Tamaño:</label>
+                                    <input type="range" id="image-post-watermark-size" min="10" max="100" value="30" title="Ajustar tamaño">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="image-post-watermark-opacity">Opacidad:</label>
+                                    <input type="range" id="image-post-watermark-opacity" min="0" max="100" value="50" title="Ajustar opacidad">
+                                </div>
+                                <button type="button" id="image-post-remove-watermark-btn" title="Quitar la marca de agua">Quitar Marca</button>
+                            </div>
+                        </div>
+
+                        <h3>5. Elige el Modo de Títulos</h3>
+                        <div class="mode-selector">
+                            <button id="image-post-mode-manual-btn" class="mode-btn active" type="button">Manual</button>
+                            <button id="image-post-mode-ai-btn" class="mode-btn" type="button">Generar con IA</button>
+                        </div>
+
+                        <div id="image-post-manual-input-container">
+                            <h3>6. Pega tus Títulos</h3>
+                            <textarea id="image-post-texts-input" placeholder="Pega tus títulos aquí. Un post por cada salto de línea..."></textarea>
+                        </div>
+
+                        <div id="image-post-ai-input-container" class="hidden">
+                            <h3>6. Define el Contenido de Títulos</h3>
+                            <div class="form-group">
+                                <label for="image-post-ai-topic">Tema Principal</label>
+                                <input type="text" id="image-post-ai-topic" placeholder="Ej: Frases motivacionales sobre el éxito">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="image-post-ai-tone">Tono</label>
+                                    <select id="image-post-ai-tone">
+                                        <option value="Profesional">Profesional</option>
+                                        <option value="Chistoso / Divertido">Chistoso / Divertido</option>
+                                        <option value="Inspirador" selected>Inspirador</option>
+                                        <option value="Polémico">Polémico</option>
+                                        <option value="Sarcástico / Irónico">Sarcástico / Irónico</option>
+                                        <option value="Informativo">Informativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="image-post-ai-quantity">Cantidad</label>
+                                    <input type="number" id="image-post-ai-quantity" value="3" min="1" max="10">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="generate-image-posts-btn">Generar Posts con Imagen</button>
+
+                    </div>
+                    <div class="post-preview-area">
+                        <h3>Previsualización</h3>
+                        <div id="image-post-preview-container">
+                            <div id="image-post-preview-template" class="post-template facebook">
+                                <!-- El encabezado del post (perfil) se copia de la otra plantilla pero está oculto por defecto -->
+                                <div class="post-header hidden">
+                                    <div class="post-profile-pic" title="Haz clic para cambiar la foto">
+                                        <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3e%3c/path%3e%3c/svg%3e" alt="Avatar">
+                                        <input type="file" class="file-upload-input" id="image-post-profile-pic-upload" accept="image/*">
+                                    </div>
+                                    <div class="post-profile-info">
+                                        <div class="post-name-wrapper">
+                                            <span class="post-name">Nombre Apellido</span>
+                                            <svg class="facebook-verified-badge" viewBox="0 0 24 24" aria-label="Cuenta verificada" role="img"><g><path fill="rgb(25, 134, 242)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.03 15.42l-4.5-4.5 1.41-1.41 3.09 3.08 6.59-6.59 1.41 1.41-8 8z"></path></g></svg>
+                                            <svg class="twitter-verified-badge" viewBox="0 0 24 24" aria-label="Verified account" role="img"><g><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.33 2.34 5.23-5.23 1.42 1.42-6.65 6.65z"></path></g></svg>
+                                        </div>
+                                        <span class="post-username">@usuario</span>
+                                    </div>
+                                </div>
+                                <!-- Contenido principal del post con imagen -->
+                                <div class="image-post-content">
+                                    <p class="image-post-title">Este es el título que aparecerá sobre tu imagen. Sube una imagen y añade tus títulos para empezar a generar.</p>
+                                    <div class="image-post-image-wrapper">
+                                        <img class="image-post-base-img" src="" alt="Previsualización de la imagen base">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="image-post-watermark-overlay" class="hidden"></div>
+                        </div>
+                        <div id="image-post-results-area">
+                            <div class="results-header hidden">
+                                <h3>Resultados Generados</h3>
+                                <button id="image-post-download-all-zip-btn" class="download-button">Descargar Todo (.zip)</button>
+                            </div>
+                            <div id="image-post-results-grid">
+                                <!-- Las imágenes generadas aparecerán aquí -->
+                            </div>
+                            <div id="image-post-generator-loader" class="hidden">
+                                <div class="spinner"></div>
+                                <p>Generando imágenes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <input type="file" id="image-upload-input" class="file-upload-input" accept="image/*">
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
