@@ -1,0 +1,1225 @@
+
+:root {
+    --primary-green: #075E54;
+    --light-green: #25D366;
+    --message-out-bg: #DCF8C6;
+    --message-in-bg: #FFFFFF;
+    --background-color: #E5DDD5;
+    --text-dark: #333;
+    --text-light: #FAFAFA;
+    --border-color: #DDD;
+    --placeholder-text: #888;
+    --meta-text-color: #667781;
+    --default-bg-image: url('https://i.ibb.co/PG9gB6b0/283a94dd6b6ceab30c472d36be2f6831.jpg');
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+#app-container {
+    width: 100%;
+    max-width: 960px; /* Aumentado para el nuevo layout */
+    background-color: var(--text-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: var(--primary-green);
+    color: var(--text-light);
+    padding: 16px 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+main {
+    padding: 20px;
+}
+
+/* --- Estilos de Pestañas --- */
+.tabs-container {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+.tab-btn {
+    padding: 12px 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--meta-text-color);
+    position: relative;
+    transition: color 0.3s ease;
+}
+.tab-btn.active {
+    color: var(--primary-green);
+}
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary-green);
+}
+#chat-generator-view.hidden, 
+#post-generator-view.hidden,
+#image-post-generator-view.hidden {
+    display: none;
+}
+
+/* --- Estilos Globales de la Clave API --- */
+.api-key-container {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+
+/* --- Estilos Generador de Chats (existentes) --- */
+#chat-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.hidden {
+    display: none;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+    color: var(--text-dark);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 2px rgba(7, 94, 84, 0.2);
+}
+
+.api-key-note {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 6px;
+}
+
+.api-key-note a {
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+.api-key-note a:hover {
+    text-decoration: underline;
+}
+
+#change-api-key-btn {
+    background-color: var(--meta-text-color);
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+    margin-top: 6px;
+    font-size: 0.9rem;
+}
+
+#change-api-key-btn.hidden {
+    display: none;
+}
+
+.file-upload-input {
+    display: none;
+}
+
+.file-upload-label {
+    display: block;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.file-upload-label:hover {
+    background-color: #f1f1f1;
+    border-color: #ccc;
+}
+
+
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.button-container {
+    display: flex;
+    gap: 16px;
+}
+
+#generate-btn,
+.download-button,
+#generate-posts-btn,
+#generate-image-posts-btn {
+    flex: 1;
+    padding: 12px 20px;
+    color: var(--text-light);
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-transform: uppercase;
+}
+
+#generate-btn, #generate-posts-btn, #generate-image-posts-btn {
+    background-color: var(--light-green);
+}
+
+#generate-btn:hover, #generate-posts-btn:hover, #generate-image-posts-btn:hover {
+    background-color: #1EBE57;
+}
+
+#generate-btn:disabled, #generate-posts-btn:disabled, #generate-image-posts-btn:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+#download-full-btn {
+    background-color: #0088cc;
+}
+#download-full-btn:hover {
+    background-color: #0077b3;
+}
+#download-chat-only-btn {
+    background-color: #6c757d;
+}
+#download-chat-only-btn:hover {
+    background-color: #5a6268;
+}
+
+.download-button.hidden {
+    display: none;
+}
+
+
+#chat-window {
+    max-width: 400px;
+    width: 100%;
+    height: 600px;
+    margin: 0 auto;
+    background-image: var(--default-bg-image);
+    background-repeat: repeat;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#chat-header {
+    background-color: var(--primary-green);
+    color: var(--text-light);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+#profile-pic-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    background-color: #667781;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+#profile-pic-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#profile-pic-upload {
+    display: none;
+}
+
+#contact-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+#contact-name {
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#contact-status {
+    font-size: 0.8rem;
+    color: #E0E0E0;
+    cursor: pointer;
+}
+
+#header-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.header-icon {
+    cursor: pointer;
+}
+
+.header-icon#default-profile-icon path {
+    fill: white;
+}
+
+
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* Espaciado principal entre todos los elementos del chat */
+    background-image: var(--default-bg-image);
+    background-repeat: repeat;
+}
+
+.message {
+    padding: 6px 9px;
+    max-width: 75%;
+    width: fit-content;
+    color: var(--text-dark);
+    position: relative;
+}
+
+span[contenteditable="true"] {
+    outline: 1px solid #888;
+    border-radius: 3px;
+    padding: 2px;
+    margin: -2px;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+
+.message.out {
+    background-color: var(--message-out-bg);
+    align-self: flex-end;
+    border-radius: 7.5px 0 7.5px 7.5px;
+}
+
+.message.in {
+    background-color: var(--message-in-bg);
+    align-self: flex-start;
+    border-radius: 0 7.5px 7.5px 7.5px;
+}
+
+.message:after {
+    position: absolute;
+    top: 0;
+    width: 10px;
+    height: 10px;
+}
+
+.message.in:after {
+    left: -9px;
+    content: url("data:image/svg+xml,%3csvg width='10' height='10' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M10 0 L0 0 L10 10 Z' fill='%23FFFFFF'/%3e%3c/svg%3e");
+}
+
+.message.out:after {
+    right: -9px;
+    content: url("data:image/svg+xml,%3csvg width='10' height='10' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 0 L10 0 L0 10 Z' fill='%23DCF8C6'/%3e%3c/svg%3e");
+}
+
+/* Base style for meta, shared by text, image, and sticker messages where applicable */
+.message-meta {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* --- Text Message Special Layout --- */
+.message:not(.image-message):not(.sticker-message) {
+    /* Reduce bottom padding for a tighter look, top padding is 6px from .message */
+    padding-bottom: 2px; 
+}
+
+/* The actual text content span */
+.message:not(.image-message):not(.sticker-message) > span:not(.message-meta) {
+    display: block; /* Ensures text wraps correctly and contains the float */
+    line-height: 1.4;
+    word-wrap: break-word;
+    /* This padding creates the vertical space for the timestamp below the text */
+    padding-bottom: 15px;
+}
+
+/* We create an invisible floated element at the end of the text span.
+   The text will wrap around this element, leaving a "hole" for the timestamp. */
+.message:not(.image-message):not(.sticker-message) > span:not(.message-meta)::after {
+    content: '';
+    display: block;
+    width: 85px;  /* Approximate width of the timestamp + ticks + spacing */
+    height: 15px; /* Approximate height of the timestamp */
+    float: right;
+    /* The negative margin prevents the float from adding extra height if it wraps to a new line */
+    margin-bottom: -15px;
+}
+
+/* Position the metadata in the bottom-right corner of the text bubble.
+   It will sit visually inside the "hole" we created above. */
+.message:not(.image-message):not(.sticker-message) .message-meta {
+    position: absolute;
+    bottom: 4px;
+    right: 9px;
+}
+
+
+.timestamp {
+    font-size: 0.75rem;
+    color: var(--meta-text-color);
+    margin-right: 4px;
+    cursor: pointer;
+}
+
+.status-ticks {
+    cursor: pointer;
+}
+
+.status-ticks svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* --- Image Message Styles --- */
+.message.image-message {
+    padding: 4px;
+    line-height: 0;
+    display: block; /* Override for image messages */
+}
+.message.image-message:after {
+    display: none; /* Hide SVG tail for images */
+}
+
+.message-image {
+    width: 100%;
+    max-width: 250px;
+    border-radius: 6px;
+    display: block;
+}
+
+.image-message .message-meta {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    padding: 2px 6px;
+    margin: 0;
+}
+
+.image-message .timestamp {
+    color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+.image-message .status-ticks svg path {
+    fill: white;
+}
+/* --- End Image Message Styles --- */
+
+/* --- Sticker Message Styles --- */
+.message.sticker-message {
+    background-color: transparent;
+    padding: 0;
+    max-width: 128px;
+    display: block; /* Override for sticker messages */
+}
+
+.message.sticker-message:after {
+    display: none;
+}
+
+.sticker-message .message-image {
+    max-width: 100%;
+    border-radius: 0;
+    display: block;
+}
+
+/* Position metadata BELOW the sticker, inside its own bubble */
+.sticker-message .message-meta {
+    position: static;
+    float: right; /* Align bubble to the right within the message container */
+    margin: 4px 0 0 0; /* Top margin */
+    
+    /* Bubble styles */
+    padding: 2px 6px;
+    border-radius: 7.5px;
+}
+
+/* Set bubble color based on sender */
+.message.out.sticker-message .message-meta {
+    background-color: var(--message-out-bg);
+}
+.message.in.sticker-message .message-meta {
+    background-color: var(--message-in-bg);
+}
+
+/* Reset text/icon colors to be visible on the new background */
+.sticker-message .timestamp {
+    color: var(--meta-text-color);
+    text-shadow: none;
+}
+
+.sticker-message .status-ticks svg path {
+    fill: var(--meta-text-color);
+}
+/* --- End Sticker Message Styles --- */
+
+
+.placeholder {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--placeholder-text);
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+#loader, #post-generator-loader, #image-post-generator-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+#loader.hidden, #post-generator-loader.hidden, #image-post-generator-loader.hidden {
+    display: none;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: var(--primary-green);
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Estilos para controles de edición --- */
+.message-actions {
+    position: absolute;
+    top: -5px;
+    z-index: 5;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    padding: 2px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.message.in .message-actions { right: -25px; }
+.message.out .message-actions { left: -25px; }
+
+.message:hover .message-actions {
+    opacity: 1;
+    visibility: visible;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.delete-btn svg path {
+    stroke: #667781;
+    transition: stroke 0.2s ease;
+}
+
+.delete-btn:hover svg path {
+    stroke: #e53935; /* Color rojo al pasar el ratón */
+}
+
+/* --- Estilos del insertador de mensajes --- */
+.message-inserter {
+    height: 1px; /* Reducimos la altura para que sea casi invisible */
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    margin: 0; /* Eliminamos su propio margen */
+}
+
+.inserter-line {
+    width: 90%;
+    height: 1px;
+    background-color: #0077b380;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.inserter-buttons {
+    position: absolute;
+    display: flex;
+    gap: 8px;
+    background-color: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px) scale(0.95);
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.message-inserter:hover .inserter-line {
+    opacity: 1;
+}
+.message-inserter:hover .inserter-buttons {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.inserter-buttons button {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.inserter-buttons button:hover {
+    background-color: #f1f1f1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.inserter-buttons button svg {
+    width: 16px;
+    height: 16px;
+    stroke: #333;
+}
+
+/* --- Watermark Styles (Both) --- */
+.watermark-controls {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.watermark-tabs {
+    display: flex;
+    margin-bottom: 5px;
+}
+.watermark-tabs button {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    background-color: #e9e9e9;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.watermark-tabs button:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+.watermark-tabs button:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-left: none;
+}
+.watermark-tabs button.active {
+    background-color: var(--text-light);
+    border-bottom-color: var(--text-light);
+    font-weight: bold;
+}
+#watermark-text-options, #image-post-watermark-text-options {
+    display: flex;
+    gap: 10px;
+}
+#watermark-text-options.hidden, #watermark-image-options.hidden,
+#image-post-watermark-text-options.hidden, #image-post-watermark-image-options.hidden {
+    display: none;
+}
+#watermark-text-options input[type="text"], 
+#image-post-watermark-text-options input[type="text"] {
+    flex-grow: 1;
+}
+#watermark-text-options input[type="color"],
+#image-post-watermark-text-options input[type="color"] {
+    padding: 2px;
+    min-width: 40px;
+    height: auto;
+}
+.watermark-slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+.watermark-slider input[type="range"] {
+    flex-grow: 1;
+}
+#remove-watermark-btn, #image-post-remove-watermark-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+#remove-watermark-btn:hover, #image-post-remove-watermark-btn:hover {
+    background-color: #c82333;
+}
+
+#watermark-overlay {
+    position: absolute;
+    top: 100px; 
+    left: 20px;
+    z-index: 5;
+    cursor: move;
+    user-select: none; /* Prevent text selection while dragging */
+    max-width: 95%;
+    max-height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#watermark-overlay.hidden {
+    display: none;
+}
+#watermark-overlay img {
+    pointer-events: none; /* Prevent image dragging issues */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+#watermark-overlay span {
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+
+/* --- Estilos Generador de Posts (Ambos) --- */
+.post-generator-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+}
+.post-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.post-controls h3 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: -5px;
+}
+.template-selector {
+    display: flex;
+    gap: 10px;
+}
+.template-btn, .align-btn, .style-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-dark);
+}
+.template-btn.active, .align-btn.active, .style-btn.active {
+    background-color: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+}
+.align-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.align-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+.style-btn {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+#twitter-options-container,
+#facebook-options-container {
+    margin-top: -10px;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.checkbox-label:hover {
+    background-color: #f0f0f0;
+}
+.mode-selector {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+.mode-btn.active {
+    background-color: var(--primary-green);
+    color: white;
+}
+#ai-input-container, #image-post-ai-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+#ai-input-container.hidden, #image-post-ai-input-container.hidden {
+    display: none;
+}
+#post-texts-input, #image-post-texts-input {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    resize: vertical;
+}
+#generate-posts-btn, #generate-image-posts-btn {
+    width: 100%;
+    flex: none;
+}
+.post-preview-area {
+    background-color: #f0f2f5;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.post-preview-area h3 {
+    color: var(--text-dark);
+}
+#post-preview-container, #image-post-preview-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* --- Estilos Plantilla de Post (Genéricos) --- */
+.post-template {
+    border: 1px solid #ccc;
+    background-color: white;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+}
+.post-header.hidden {
+    display: none;
+}
+.post-profile-pic {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    background-color: #f0f2f5;
+}
+.post-profile-pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.post-profile-info {
+    display: flex;
+    flex-direction: column;
+}
+.post-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.post-name {
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+.twitter-verified-badge, .facebook-verified-badge {
+    display: none;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: text-bottom;
+    flex-shrink: 0;
+}
+.twitter-verified-badge {
+    fill: rgb(29, 155, 240);
+}
+
+/* --- CORRECCIÓN: Reglas de insignia de verificación más específicas --- */
+.post-template.twitter.show-verified .twitter-verified-badge {
+    display: inline-block;
+}
+.post-template.facebook.show-verified .facebook-verified-badge {
+    display: inline-block;
+}
+
+.post-username {
+    color: #536471;
+    cursor: pointer;
+}
+
+/* --- Estilos específicos: Post de Solo Texto --- */
+.post-template.facebook {
+    width: 400px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+.post-template.twitter {
+    width: 450px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.post-body {
+    padding: 0 12px 12px 12px;
+}
+.post-template.facebook .post-body {
+    flex-grow: 1;
+    padding: 12px;
+}
+.post-text {
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--text-dark);
+}
+.post-text.align-left { text-align: left; }
+.post-text.align-center { text-align: center; }
+.post-text.align-right { text-align: right; }
+.post-text.align-justify { text-align: justify; }
+
+.post-template.twitter .post-text {
+    font-size: 1.1rem;
+}
+
+/* --- Estilos específicos: Post con Imagen --- */
+#image-post-header-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#image-post-header-options.hidden { display: none; }
+#image-post-thumbnail-container {
+    margin-top: 10px;
+    max-width: 100px;
+    border: 1px solid var(--border-color);
+    padding: 4px;
+    border-radius: 4px;
+}
+#image-post-thumbnail-container.hidden { display: none; }
+#image-post-thumbnail {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+#image-post-preview-template.post-template.facebook,
+#image-post-preview-template.post-template.twitter {
+    width: 400px;
+    height: auto;
+}
+.image-post-content {
+    padding: 12px;
+}
+.image-post-title {
+    font-size: 1.1rem;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--text-dark);
+}
+.image-post-title.align-left { text-align: left; }
+.image-post-title.align-center { text-align: center; }
+.image-post-title.align-right { text-align: right; }
+.image-post-title.align-justify { text-align: justify; }
+.image-post-title.font-bold { font-weight: bold; }
+.image-post-title.font-italic { font-style: italic; }
+
+
+.image-post-image-wrapper {
+    width: 100%;
+    padding-top: 100%; /* Aspect ratio 1:1 */
+    position: relative;
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+.image-post-base-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- Estilos Marca de Agua (Post con Imagen) --- */
+#image-post-watermark-overlay {
+    position: absolute;
+    top: 100px;
+    left: 20px;
+    z-index: 5;
+    cursor: move;
+    user-select: none;
+    max-width: 95%;
+    max-height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#image-post-watermark-overlay.hidden {
+    display: none;
+}
+#image-post-watermark-overlay img {
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+#image-post-watermark-overlay span {
+    pointer-events: none;
+    white-space: nowrap;
+    text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Área de Resultados (Ambos) --- */
+#post-results-area, #image-post-results-area {
+    position: relative;
+    min-height: 100px;
+}
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.results-header.hidden {
+    display: none;
+}
+#download-all-zip-btn, #image-post-download-all-zip-btn {
+    flex: 0;
+    background-color: #0088cc;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+}
+#download-all-zip-btn:hover, #image-post-download-all-zip-btn:hover {
+    background-color: #0077b3;
+}
+#results-grid, #image-post-results-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+.result-item {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    transition: none;
+}
+.result-item:hover {
+    transform: none;
+    z-index: auto;
+    box-shadow: none;
+}
+.result-item img {
+    width: auto;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 6px;
+}
+.result-item .download-single-btn {
+    position: static;
+    opacity: 1;
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: center;
+}
+.result-item .download-single-btn:hover {
+    background-color: var(--light-green);
+}
+
+
+/* Responsive Styles */
+@media (max-width: 800px) {
+    .post-generator-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    
+    #app-container {
+        max-width: 100%;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    header h1 {
+        font-size: 1.25rem;
+    }
+}
