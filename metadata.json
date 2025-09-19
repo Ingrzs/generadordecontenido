@@ -1,0 +1,5 @@
+{
+  "name": "Chat Generator",
+  "description": "An app to generate fake WhatsApp conversations on a given topic using AI.",
+  "requestFramePermissions": []
+}
