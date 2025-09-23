@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 declare const html2canvas: any;
@@ -22,15 +21,38 @@ type PostTemplateData = {
 };
 
 type PostGenMode = 'manual' | 'ai';
+type ImagePostGenMode = 'manual' | 'ai-topic' | 'ai-image';
+type MemePanelData = { 
+    imageUrl?: string; 
+    text?: string;
+    x: number; // % from left
+    y: number; // % from top
+    width: number; // % of panel width
+};
+type MemeTextInteractionState = {
+    active: boolean;
+    type: 'drag' | 'resize-left' | 'resize-right' | null;
+    panelIndex: number | null;
+    startX: number;
+    startY: number;
+    startLeft: number;
+    startTop: number;
+    startWidth: number;
+};
+
 
 const App = () => {
     // --- Common Elements ---
     const tabChatGenerator = document.getElementById('tab-chat-generator') as HTMLButtonElement;
     const tabPostGenerator = document.getElementById('tab-post-generator') as HTMLButtonElement;
     const tabImagePostGenerator = document.getElementById('tab-image-post-generator') as HTMLButtonElement;
+    const tabFacebookPostGenerator = document.getElementById('tab-facebook-post-generator') as HTMLButtonElement;
+    const tabMemeGenerator = document.getElementById('tab-meme-generator') as HTMLButtonElement;
     const chatGeneratorView = document.getElementById('chat-generator-view') as HTMLDivElement;
     const postGeneratorView = document.getElementById('post-generator-view') as HTMLDivElement;
     const imagePostGeneratorView = document.getElementById('image-post-generator-view') as HTMLDivElement;
+    const facebookPostGeneratorView = document.getElementById('facebook-post-generator-view') as HTMLDivElement;
+    const memeGeneratorView = document.getElementById('meme-generator-view') as HTMLDivElement;
     const apiKeyInput = document.getElementById('api-key') as HTMLInputElement;
     const apiKeyGroup = document.getElementById('api-key-group') as HTMLDivElement;
     const changeApiKeyBtn = document.getElementById('change-api-key-btn') as HTMLButtonElement;
@@ -119,9 +141,11 @@ const App = () => {
     const imagePostStyleSelector = document.getElementById('image-post-style-selector') as HTMLDivElement;
     const imagePostTextAlignSelector = document.getElementById('image-post-text-align-selector') as HTMLDivElement;
     const imagePostModeManualBtn = document.getElementById('image-post-mode-manual-btn') as HTMLButtonElement;
-    const imagePostModeAiBtn = document.getElementById('image-post-mode-ai-btn') as HTMLButtonElement;
+    const imagePostModeAiTopicBtn = document.getElementById('image-post-mode-ai-topic-btn') as HTMLButtonElement;
+    const imagePostModeAiImageBtn = document.getElementById('image-post-mode-ai-image-btn') as HTMLButtonElement;
     const imagePostManualInputContainer = document.getElementById('image-post-manual-input-container') as HTMLDivElement;
     const imagePostAiInputContainer = document.getElementById('image-post-ai-input-container') as HTMLDivElement;
+    const imagePostAiTopicGroup = document.getElementById('image-post-ai-topic-group') as HTMLDivElement;
     const imagePostTextsInput = document.getElementById('image-post-texts-input') as HTMLTextAreaElement;
     const imagePostAiTopicInput = document.getElementById('image-post-ai-topic') as HTMLInputElement;
     const imagePostAiToneSelect = document.getElementById('image-post-ai-tone') as HTMLSelectElement;
@@ -149,6 +173,51 @@ const App = () => {
     const imagePostRemoveWatermarkBtn = document.getElementById('image-post-remove-watermark-btn') as HTMLButtonElement;
     const imagePostWatermarkOverlay = document.getElementById('image-post-watermark-overlay') as HTMLDivElement;
 
+    // --- Facebook Post Generator Elements ---
+    const fbPersonNameInput = document.getElementById('fb-person-name') as HTMLInputElement;
+    const fbYearSelect = document.getElementById('fb-year-select') as HTMLSelectElement;
+    const fbMonthSelect = document.getElementById('fb-month-select') as HTMLSelectElement;
+    const fbDaySelect = document.getElementById('fb-day-select') as HTMLSelectElement;
+    const fbDateError = document.getElementById('fb-date-error') as HTMLParagraphElement;
+    const fbToneSelect = document.getElementById('fb-tone-select') as HTMLSelectElement;
+    const fbLengthSelector = document.getElementById('fb-length-selector') as HTMLDivElement;
+    const fbGenerateBtn = document.getElementById('fb-generate-btn') as HTMLButtonElement;
+    const fbResultsContainer = document.getElementById('fb-results-container') as HTMLDivElement;
+    const fbInitialState = document.getElementById('fb-initial-state') as HTMLDivElement;
+    const fbLoader = document.getElementById('fb-loader') as HTMLDivElement;
+    const fbGeneratedText = document.getElementById('fb-generated-text') as HTMLDivElement;
+    const fbCopyBtn = document.getElementById('fb-copy-btn') as HTMLButtonElement;
+    const fbSourcesList = document.getElementById('fb-sources-list') as HTMLUListElement;
+
+    // --- Meme Generator Elements ---
+    const memeLayoutSelector = document.getElementById('meme-layout-selector') as HTMLDivElement;
+    const memeGutterSlider = document.getElementById('meme-gutter-slider') as HTMLInputElement;
+    const memeGutterValue = document.getElementById('meme-gutter-value') as HTMLSpanElement;
+    const memeBgColorInput = document.getElementById('meme-bg-color') as HTMLInputElement;
+    const generateMemeBtn = document.getElementById('generate-meme-btn') as HTMLButtonElement;
+    const memeCaptureWrapper = document.getElementById('meme-capture-wrapper') as HTMLDivElement;
+    const memeCanvasContainer = document.getElementById('meme-canvas-container') as HTMLDivElement;
+    const memeTextInputsContainer = document.getElementById('meme-text-inputs-container') as HTMLDivElement;
+    const memeImageUpload = document.getElementById('meme-image-upload') as HTMLInputElement;
+    const memeFontSelector = document.getElementById('meme-font-selector') as HTMLSelectElement;
+    const memeFontSizeSlider = document.getElementById('meme-font-size-slider') as HTMLInputElement;
+    const memeFontSizeValue = document.getElementById('meme-font-size-value') as HTMLSpanElement;
+    const memeTextColorInput = document.getElementById('meme-text-color') as HTMLInputElement;
+    const memeBorderColorInput = document.getElementById('meme-border-color') as HTMLInputElement;
+    const memeBorderThicknessSlider = document.getElementById('meme-border-thickness') as HTMLInputElement;
+    const memeBorderThicknessValue = document.getElementById('meme-border-thickness-value') as HTMLSpanElement;
+    const memeWatermarkTextTab = document.getElementById('meme-watermark-text-tab') as HTMLButtonElement;
+    const memeWatermarkImageTab = document.getElementById('meme-watermark-image-tab') as HTMLButtonElement;
+    const memeWatermarkTextOptions = document.getElementById('meme-watermark-text-options') as HTMLDivElement;
+    const memeWatermarkImageOptions = document.getElementById('meme-watermark-image-options') as HTMLDivElement;
+    const memeWatermarkTextInput = document.getElementById('meme-watermark-text') as HTMLInputElement;
+    const memeWatermarkColorInput = document.getElementById('meme-watermark-color') as HTMLInputElement;
+    const memeWatermarkUpload = document.getElementById('meme-watermark-upload') as HTMLInputElement;
+    const memeWatermarkSizeSlider = document.getElementById('meme-watermark-size') as HTMLInputElement;
+    const memeWatermarkOpacitySlider = document.getElementById('meme-watermark-opacity') as HTMLInputElement;
+    const memeRemoveWatermarkBtn = document.getElementById('meme-remove-watermark-btn') as HTMLButtonElement;
+    const memeWatermarkOverlay = document.getElementById('meme-watermark-overlay') as HTMLDivElement;
+
 
     let ai: GoogleGenAI;
     let currentConversation: Message[] = [];
@@ -160,12 +229,21 @@ const App = () => {
     let generatedPostCanvases: HTMLCanvasElement[] = [];
     let generatedImagePostCanvases: HTMLCanvasElement[] = [];
     let currentPostGenMode: PostGenMode = 'manual';
-    let currentImagePostGenMode: PostGenMode = 'manual';
+    let currentImagePostGenMode: ImagePostGenMode = 'manual';
     let imagePostBase64: string | null = null;
     let isDraggingImagePostWatermark = false;
     let imagePostWatermarkDragStartX = 0, imagePostWatermarkDragStartY = 0;
     let imagePostWatermarkElementStartX = 0, imagePostWatermarkElementStartY = 0;
     let currentImagePostWatermarkType: 'text' | 'image' = 'text';
+    let currentFbPostLength: 'corta' | 'media' | 'larga' = 'media';
+    let currentMemeLayout = '1f';
+    let memePanelData: MemePanelData[] = [];
+    let activeMemePanelIndex = 0;
+    let isDraggingMemeWatermark = false;
+    let memeWatermarkDragStartX = 0, memeWatermarkDragStartY = 0;
+    let memeWatermarkElementStartX = 0, memeWatermarkElementStartY = 0;
+    let currentMemeWatermarkType: 'text' | 'image' = 'text';
+    let memeTextInteraction: MemeTextInteractionState = { active: false, type: null, panelIndex: null, startX: 0, startY: 0, startLeft: 0, startTop: 0, startWidth: 0 };
 
     const statusSVGs: Record<MessageStatus, string> = {
         read: `<svg viewBox="0 0 18 18" width="18" height="18"><path fill="#4FC3F7" d="M17.394 5.035l-.57-.443a.453.453 0 00-.638.083l-6.2 7.61-3.23-2.84a.453.453 0 00-.592.132l-.46.52a.453.453 0 00.083.638l3.99 3.513a.453.453 0 00.613.02l.025-.02 6.917-8.497a.453.453 0 00-.083-.638zM12.56 5.035l-.57-.443a.453.453 0 00-.638.083L5.435 12.29l-1.39-1.22a.453.453 0 00-.592.132l-.46.52a.453.453 0 00.083.638l2.147 1.89a.453.453 0 00.613.02l.025-.02 1.48-1.82-.54-.42a.453.453 0 01-.07-.62z"></path></svg>`,
@@ -212,15 +290,52 @@ const App = () => {
         required: ["posts"]
     };
 
+    // --- Centralized State Management for FB Post Generator Button ---
+    const updateFbGenerateBtnState = () => {
+        const isAiReady = !!ai;
+        const isNameEntered = fbPersonNameInput.value.trim() !== '';
+
+        const yearVal = fbYearSelect.value;
+        const monthVal = fbMonthSelect.value;
+        const dayVal = fbDaySelect.value;
+
+        let isDateValid = true;
+        // A date is invalid only if a full, specific date is selected and it's in the future.
+        if (yearVal !== 'any' && monthVal !== 'any' && dayVal !== 'any') {
+            const year = parseInt(yearVal);
+            const month = parseInt(monthVal);
+            const day = parseInt(dayVal);
+
+            const selectedDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate > today) {
+                fbDateError.classList.remove('hidden');
+                isDateValid = false;
+            } else {
+                fbDateError.classList.add('hidden');
+            }
+        } else {
+            fbDateError.classList.add('hidden');
+        }
+        
+        fbGenerateBtn.disabled = !(isAiReady && isNameEntered && isDateValid);
+    };
+
     // --- Tab Switching Logic ---
-    const setActiveTab = (tabName: 'chat' | 'post' | 'image-post') => {
+    const setActiveTab = (tabName: 'chat' | 'post' | 'image-post' | 'facebook-post' | 'meme') => {
         tabChatGenerator.classList.toggle('active', tabName === 'chat');
         tabPostGenerator.classList.toggle('active', tabName === 'post');
         tabImagePostGenerator.classList.toggle('active', tabName === 'image-post');
+        tabFacebookPostGenerator.classList.toggle('active', tabName === 'facebook-post');
+        tabMemeGenerator.classList.toggle('active', tabName === 'meme');
         
         chatGeneratorView.classList.toggle('hidden', tabName !== 'chat');
         postGeneratorView.classList.toggle('hidden', tabName !== 'post');
         imagePostGeneratorView.classList.toggle('hidden', tabName !== 'image-post');
+        facebookPostGeneratorView.classList.toggle('hidden', tabName !== 'facebook-post');
+        memeGeneratorView.classList.toggle('hidden', tabName !== 'meme');
     };
 
     // --- Common Helper Functions ---
@@ -258,14 +373,23 @@ const App = () => {
         if (storedKey) {
             apiKeyGroup.classList.add('hidden');
             changeApiKeyBtn.classList.remove('hidden');
-            try { ai = new GoogleGenAI({ apiKey: storedKey }); } catch(e) { console.error("Fallo al inicializar la IA con la clave guardada:", e); localStorage.removeItem('gemini-api-key'); initApiKeyUI(); }
+            try { 
+                ai = new GoogleGenAI({ apiKey: storedKey }); 
+            } catch(e) { 
+                console.error("Fallo al inicializar la IA con la clave guardada:", e); 
+                localStorage.removeItem('gemini-api-key'); 
+                initApiKeyUI(); 
+                return; // Stop execution to avoid calling the updater in a faulty state
+            }
         } else {
             apiKeyGroup.classList.remove('hidden');
             changeApiKeyBtn.classList.add('hidden');
+            ai = undefined as any; // Clear the AI instance if no key
         }
+        updateFbGenerateBtnState(); // Always update the button state
     };
 
-    // --- Helper to initialize AI, to be used by both generators ---
+    // --- Helper to initialize AI, to be used by all generators ---
     const initializeAi = (): boolean => {
         if (ai) return true; // Already initialized
 
@@ -274,7 +398,7 @@ const App = () => {
             try {
                 ai = new GoogleGenAI({ apiKey });
                 saveApiKey(apiKey);
-                initApiKeyUI(); // Hides input, shows 'change' button
+                initApiKeyUI(); // Hides input, shows 'change' button, and updates button states
                 return true;
             } catch (e) {
                 console.error("Fallo al inicializar la IA con la nueva clave:", e);
@@ -282,7 +406,6 @@ const App = () => {
                 return false;
             }
         }
-        // No key in local storage (checked on load) and no key in input field
         return false;
     };
 
@@ -421,11 +544,32 @@ const App = () => {
         chatDownloadButtons.forEach(btn => btn.classList.add('hidden'));
         chatMessagesContainer.innerHTML = '';
         
-        const prompt = `Genera una conversación de chat de WhatsApp falsa de longitud "${lengthSelect.value}" entre dos personas, "Persona 1" y "Persona 2". Para cada mensaje, incluye una marca de tiempo (timestamp) en formato 'HH:MM AM/PM'. Parámetros: - Tema: ${topic} - Tono: ${toneSelect.value} - Estilo de escritura: ${styleSelect.value}${persona1DescInput.value.trim() || persona2DescInput.value.trim() ? `\n- Descripciones de los participantes:\n  - Persona 1 (el receptor): ${persona1DescInput.value.trim()}\n  - Persona 2 (el emisor): ${persona2DescInput.value.trim()}` : ''}. Asegúrate de que la conversación fluya de manera natural, ${emojisSelect.value === 'con emojis' ? 'y que incluya emojis de forma apropiada.' : 'y NO incluyas ningún emoji.'} "${starterSelect.value}" inicia la conversación. La respuesta debe ser un objeto JSON que siga el esquema proporcionado.`;
+        const prompt = `Genera una conversación de chat de WhatsApp falsa de longitud "${lengthSelect.value}" entre dos personas, "Persona 1" y "Persona 2".
+Parámetros:
+- Tema: ${topic}
+- Tono: ${toneSelect.value}
+- Estilo de escritura: ${styleSelect.value}
+${persona1DescInput.value.trim() || persona2DescInput.value.trim() ? `- Descripciones de los participantes:\n  - Persona 1 (el receptor): ${persona1DescInput.value.trim()}\n  - Persona 2 (el emisor): ${persona2DescInput.value.trim()}` : ''}
+- Emojis: ${emojisSelect.value === 'con emojis' ? 'incluir emojis de forma apropiada' : 'no incluir ningún emoji'}
+- Quién inicia: "${starterSelect.value}"
+
+La respuesta DEBE ser un único objeto JSON válido, sin formato Markdown (sin \`\`\`json). El objeto debe tener una sola clave "conversation", que es un array de objetos. Cada objeto en el array representa un mensaje y debe tener las siguientes claves:
+- "sender": (string) "Persona 1" o "Persona 2".
+- "message": (string) El contenido del mensaje.
+- "timestamp": (string) La hora del mensaje, en formato 'HH:MM AM/PM'.`;
         
         try {
-            const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { responseMimeType: "application/json", responseSchema: chatSchema } });
-            const parsedJson = JSON.parse(response.text.trim());
+            const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt });
+            
+            let jsonString = response.text.trim();
+            if (jsonString.startsWith('```json')) {
+                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+            } else if (jsonString.startsWith('```')) {
+                 jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            }
+
+            const parsedJson = JSON.parse(jsonString);
+
             if (parsedJson.conversation && parsedJson.conversation.length > 0) {
                 currentConversation = parsedJson.conversation;
                 displayMessages();
@@ -735,19 +879,31 @@ const App = () => {
                     imagePostPreviewImage.src = imagePostBase64;
                     imagePostThumbnail.src = imagePostBase64;
                     imagePostThumbnailContainer.classList.remove('hidden');
+                    imagePostModeAiImageBtn.disabled = false;
+                    imagePostModeAiImageBtn.title = 'Sugerir títulos basados en tu imagen';
                 }
             };
             reader.readAsDataURL(input.files[0]);
         }
     };
 
-    const switchImagePostGenMode = (mode: PostGenMode) => {
+    const switchImagePostGenMode = (mode: ImagePostGenMode) => {
         currentImagePostGenMode = mode;
-        imagePostModeAiBtn.classList.toggle('active', mode === 'ai');
         imagePostModeManualBtn.classList.toggle('active', mode === 'manual');
-        imagePostAiInputContainer.classList.toggle('hidden', mode !== 'ai');
-        imagePostManualInputContainer.classList.toggle('hidden', mode === 'ai');
-        generateImagePostsBtn.textContent = mode === 'ai' ? 'Generar Títulos y Posts' : 'Generar Posts con Imagen';
+        imagePostModeAiTopicBtn.classList.toggle('active', mode === 'ai-topic');
+        imagePostModeAiImageBtn.classList.toggle('active', mode === 'ai-image');
+
+        imagePostManualInputContainer.classList.toggle('hidden', mode !== 'manual');
+        imagePostAiInputContainer.classList.toggle('hidden', mode === 'manual');
+        imagePostAiTopicGroup.classList.toggle('hidden', mode === 'ai-image');
+
+        if (mode === 'manual') {
+            generateImagePostsBtn.textContent = 'Generar Posts con Imagen';
+        } else if (mode === 'ai-topic') {
+            generateImagePostsBtn.textContent = 'Generar Títulos y Posts';
+        } else { // ai-image
+            generateImagePostsBtn.textContent = 'Sugerir y Generar Posts';
+        }
     };
 
     const toggleImagePostLoading = (isLoading: boolean, message = 'Generando imágenes...') => {
@@ -841,15 +997,35 @@ const App = () => {
         if (!initializeAi()) {
             throw new Error('Por favor, introduce tu clave API para usar la generación con IA.');
         }
-        const topic = imagePostAiTopicInput.value.trim();
-        if (!topic) throw new Error('Por favor, introduce un tema principal para la generación con IA.');
         
         const tone = imagePostAiToneSelect.value;
         const quantity = imagePostAiQuantityInput.value;
-        const prompt = `Actúa como un experto en redes sociales. Genera ${quantity} títulos cortos o frases para colocar sobre una imagen, sobre el tema: "${topic}". El tono debe ser ${tone}. No incluyas hashtags ni comillas. La respuesta debe ser un objeto JSON que siga el esquema proporcionado.`;
+        let prompt = '';
+        let contents: string | { parts: any[] };
+
+        if (currentImagePostGenMode === 'ai-image') {
+            if (!imagePostBase64) {
+                throw new Error("No hay imagen subida para analizar.");
+            }
+            prompt = `Analiza esta imagen y genera ${quantity} títulos cortos o frases para colocar sobre ella, para una publicación en redes sociales. El tono debe ser ${tone}. No incluyas hashtags ni comillas. La respuesta debe ser un objeto JSON que siga el esquema proporcionado.`;
+            
+            const parts = imagePostBase64.split(';');
+            const mimeType = parts[0].split(':')[1];
+            const base64Data = parts[1].split(',')[1];
+
+            const imagePart = { inlineData: { mimeType, data: base64Data } };
+            const textPart = { text: prompt };
+            contents = { parts: [imagePart, textPart] };
+
+        } else { // 'ai-topic'
+            const topic = imagePostAiTopicInput.value.trim();
+            if (!topic) throw new Error('Por favor, introduce un tema principal para la generación con IA.');
+            prompt = `Actúa como un experto en redes sociales. Genera ${quantity} títulos cortos o frases para colocar sobre una imagen, sobre el tema: "${topic}". El tono debe ser ${tone}. No incluyas hashtags ni comillas. La respuesta debe ser un objeto JSON que siga el esquema proporcionado.`;
+            contents = prompt;
+        }
 
         try {
-            const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { responseMimeType: "application/json", responseSchema: postsSchema } });
+            const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents, config: { responseMimeType: "application/json", responseSchema: postsSchema } });
             const parsedJson = JSON.parse(response.text.trim());
             if (parsedJson.posts && parsedJson.posts.length > 0) return parsedJson.posts;
             else throw new Error("La IA no devolvió ninguna publicación.");
@@ -954,8 +1130,11 @@ const App = () => {
         try {
             let titlesToGenerate: string[] = [];
 
-            if (currentImagePostGenMode === 'ai') {
-                toggleImagePostLoading(true, 'Generando títulos con IA...');
+            if (currentImagePostGenMode === 'ai-topic' || currentImagePostGenMode === 'ai-image') {
+                const loadingMessage = currentImagePostGenMode === 'ai-image' 
+                    ? 'Analizando imagen y generando títulos...' 
+                    : 'Generando títulos con IA...';
+                toggleImagePostLoading(true, loadingMessage);
                 const generatedTitles = await generateImagePostTextsWithAI();
                 titlesToGenerate = generatedTitles;
                 imagePostTextsInput.value = generatedTitles.join('\n');
@@ -977,10 +1156,649 @@ const App = () => {
     };
 
 
+    // --- Facebook Post Generator Logic ---
+    const initFacebookPostGenerator = () => {
+        const populateYears = () => {
+            const currentYear = new Date().getFullYear();
+            fbYearSelect.innerHTML = '<option value="any">Cualquier Año</option>';
+            for (let year = currentYear; year >= 1990; year--) {
+                const option = document.createElement('option');
+                option.value = year.toString();
+                option.textContent = year.toString();
+                fbYearSelect.appendChild(option);
+            }
+        };
+
+        const populateMonths = () => {
+            const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            fbMonthSelect.innerHTML = '<option value="any">Cualquier Mes</option>';
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = (index + 1).toString();
+                option.textContent = month;
+                fbMonthSelect.appendChild(option);
+            });
+        };
+
+        const populateDays = () => {
+            const year = parseInt(fbYearSelect.value);
+            const month = parseInt(fbMonthSelect.value);
+            const currentDay = fbDaySelect.value;
+
+            fbDaySelect.innerHTML = '<option value="any">Cualquier Día</option>';
+            
+            // Default to 31 days, but calculate precisely if year and month are selected
+            let daysInMonth = 31;
+            if (!isNaN(year) && !isNaN(month)) {
+                daysInMonth = new Date(year, month, 0).getDate();
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day.toString();
+                option.textContent = day.toString();
+                fbDaySelect.appendChild(option);
+            }
+            
+            // Try to re-select the previously selected day if it's still valid
+            if (parseInt(currentDay) <= daysInMonth) {
+                fbDaySelect.value = currentDay;
+            }
+        };
+
+        const toggleFbLoading = (isLoading: boolean) => {
+            fbLoader.classList.toggle('hidden', !isLoading);
+            fbGenerateBtn.disabled = isLoading;
+        };
+        
+        const displayFbPostResults = (text: string, sources: any[]) => {
+            fbInitialState.classList.add('hidden');
+            fbResultsContainer.classList.remove('hidden');
+            
+            fbGeneratedText.textContent = text.trim();
+            
+            fbSourcesList.innerHTML = '';
+            if (sources && sources.length > 0) {
+                sources.forEach(chunk => {
+                    if (chunk.web && chunk.web.uri && chunk.web.title) {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = chunk.web.uri;
+                        a.textContent = chunk.web.title;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        li.appendChild(a);
+                        fbSourcesList.appendChild(li);
+                    }
+                });
+            } else {
+                fbSourcesList.innerHTML = '<li>No se encontraron fuentes específicas.</li>';
+            }
+        };
+
+        const displayFbPostError = (message: string) => {
+            fbInitialState.classList.add('hidden');
+            fbResultsContainer.classList.remove('hidden');
+            fbGeneratedText.textContent = `Error: ${message}`;
+            fbSourcesList.innerHTML = '';
+        };
+
+        const generateFacebookPost = async () => {
+            if (!initializeAi()) {
+                alert('Por favor, introduce tu clave API de Google AI Studio para generar el post.');
+                return;
+            }
+            
+            const personName = fbPersonNameInput.value.trim();
+            if (!personName) {
+                alert('Por favor, introduce el nombre de la figura pública.');
+                return;
+            }
+
+            toggleFbLoading(true);
+
+            let dateClause = "recientemente";
+            if (fbYearSelect.value !== 'any') {
+                if (fbMonthSelect.value !== 'any') {
+                    if (fbDaySelect.value !== 'any') {
+                        dateClause = `exactamente el día ${fbDaySelect.value} del mes ${fbMonthSelect.value} del año ${fbYearSelect.value}`;
+                    } else {
+                        dateClause = `durante el mes ${fbMonthSelect.value} del año ${fbYearSelect.value}`;
+                    }
+                } else {
+                    dateClause = `durante el año ${fbYearSelect.value}`;
+                }
+            }
+
+            let toneClause = `El tono del post debe ser ${fbToneSelect.value}.`;
+            if (fbToneSelect.value === 'Automático') {
+                toneClause = "Usa el tono que consideres más apropiado para la noticia encontrada.";
+            }
+
+            const prompt = `Actúa como un community manager experto en Facebook. Tu tarea es generar un borrador de post para Facebook sobre la figura pública: "${personName}".
+            Utiliza la búsqueda de Google para encontrar noticias o eventos verificables sobre esta persona que ocurrieron ${dateClause}.
+            ${toneClause}
+            La longitud del post debe ser ${currentFbPostLength}.
+            Formatea el texto con saltos de línea y emojis relevantes para que sea atractivo y fácil de leer en Facebook. No incluyas hashtags.
+            Responde únicamente con el texto del post.`;
+
+            try {
+                 const response = await ai.models.generateContent({
+                   model: "gemini-2.5-flash",
+                   contents: prompt,
+                   config: {
+                     tools: [{googleSearch: {}}],
+                   },
+                });
+
+                const postText = response.text;
+                const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+                if (!postText) {
+                    throw new Error("La IA no pudo generar un post con la información proporcionada. Intenta con una persona o fecha diferente.");
+                }
+
+                displayFbPostResults(postText, sources);
+
+            } catch (error) {
+                console.error("Error al generar post de Facebook:", error);
+                displayFbPostError((error as Error).message.includes("API key not valid") ? "Tu clave API no es válida." : "Ocurrió un error al contactar con la IA.");
+            } finally {
+                toggleFbLoading(false);
+            }
+        };
+
+
+        populateYears();
+        populateMonths();
+        populateDays(); // Initial population
+        
+        [fbYearSelect, fbMonthSelect].forEach(sel => sel.addEventListener('change', populateDays));
+        fbPersonNameInput.addEventListener('input', updateFbGenerateBtnState);
+        [fbYearSelect, fbMonthSelect, fbDaySelect].forEach(sel => sel.addEventListener('change', updateFbGenerateBtnState));
+
+        fbLengthSelector.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'BUTTON') {
+                fbLengthSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                target.classList.add('active');
+                currentFbPostLength = target.dataset.length as 'corta' | 'media' | 'larga';
+            }
+        });
+        
+        fbCopyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(fbGeneratedText.textContent || '').then(() => {
+                const originalText = fbCopyBtn.innerHTML;
+                fbCopyBtn.textContent = '¡Copiado!';
+                fbCopyBtn.classList.add('copied');
+                setTimeout(() => {
+                    fbCopyBtn.innerHTML = originalText;
+                    fbCopyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+
+        fbGenerateBtn.addEventListener('click', generateFacebookPost);
+    };
+
+
+    // --- Meme Generator Logic ---
+    const generateTextStroke = (thickness: number, color: string): string => {
+        if (thickness === 0) return 'none';
+        const t = `${thickness}px`;
+        const shadows = [
+            `-${t} -${t} 0 ${color}`, ` ${t} -${t} 0 ${color}`,
+            `-${t}  ${t} 0 ${color}`, ` ${t}  ${t} 0 ${color}`,
+            `-${t}   0  0 ${color}`, ` ${t}   0  0 ${color}`,
+            `  0  -${t} 0 ${color}`, `  0   ${t} 0 ${color}`
+        ];
+        return shadows.join(', ');
+    };
+
+    const updateMemeTextStyles = () => {
+        const fontFamily = memeFontSelector.value;
+        const color = memeTextColorInput.value;
+        const borderColor = memeBorderColorInput.value;
+        const borderThickness = parseInt(memeBorderThicknessSlider.value, 10);
+        const fontSize = parseInt(memeFontSizeSlider.value, 10);
+
+        memeBorderThicknessValue.textContent = borderThickness.toString();
+        memeFontSizeValue.textContent = fontSize.toString();
+        const textStroke = generateTextStroke(borderThickness, borderColor);
+
+        memeCanvasContainer.querySelectorAll('.meme-panel-text').forEach(span => {
+            const s = span as HTMLDivElement;
+            s.style.fontFamily = `'${fontFamily}', sans-serif`;
+            s.style.color = color;
+            s.style.textShadow = textStroke;
+            s.style.fontSize = `${fontSize}px`;
+        });
+    };
+
+    const renderMemePreview = () => {
+        const layoutConfig: Record<string, { count: number, style: string }> = {
+            '1f': { count: 1, style: 'grid-template-columns: 1fr; grid-template-rows: 1fr;' },
+            '2v': { count: 2, style: 'grid-template-columns: 1fr; grid-template-rows: repeat(2, 1fr);' },
+            '2h': { count: 2, style: 'grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr;' },
+            '3v': { count: 3, style: 'grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr);' },
+            '4g': { count: 4, style: 'grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr);' },
+            '6g': { count: 6, style: 'grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr);' },
+        };
+
+        const config = layoutConfig[currentMemeLayout];
+        if (!config) return;
+
+        // Ensure panel data array has enough items
+        while (memePanelData.length < config.count) {
+            memePanelData.push({ text: '', x: 50, y: 85, width: 90 });
+        }
+        memePanelData.length = config.count; // Truncate if needed
+
+        memeCanvasContainer.innerHTML = '';
+        memeTextInputsContainer.innerHTML = '';
+
+        memeCanvasContainer.style.cssText = config.style;
+        memeCanvasContainer.style.gap = `${memeGutterSlider.value}px`;
+        memeCanvasContainer.style.backgroundColor = memeBgColorInput.value;
+
+        for (let i = 0; i < config.count; i++) {
+            const panelData = memePanelData[i];
+            
+            const panelDiv = document.createElement('div');
+            panelDiv.className = 'meme-panel';
+            panelDiv.dataset.index = i.toString();
+            if (panelData.imageUrl) {
+                panelDiv.style.backgroundImage = `url('${panelData.imageUrl}')`;
+                panelDiv.classList.add('has-image');
+            }
+            
+            const textWrapper = document.createElement('div');
+            textWrapper.className = 'meme-text-wrapper';
+            textWrapper.dataset.index = i.toString();
+            textWrapper.style.left = `${panelData.x}%`;
+            textWrapper.style.top = `${panelData.y}%`;
+            textWrapper.style.width = `${panelData.width}%`;
+            textWrapper.style.transform = 'translate(-50%, -50%)';
+
+            const textSpan = document.createElement('div');
+            textSpan.className = 'meme-panel-text';
+            textSpan.textContent = panelData.text || '';
+            
+            const leftHandle = document.createElement('div');
+            leftHandle.className = 'resize-handle left';
+            const rightHandle = document.createElement('div');
+            rightHandle.className = 'resize-handle right';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'meme-text-delete-btn';
+            deleteBtn.textContent = '✕';
+            deleteBtn.title = 'Eliminar texto';
+            
+            textWrapper.append(leftHandle, textSpan, rightHandle, deleteBtn);
+            panelDiv.appendChild(textWrapper);
+
+            // Create text input
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.placeholder = `Texto para panel ${i + 1}...`;
+            textInput.value = panelData.text || '';
+            textInput.dataset.index = i.toString();
+
+            panelDiv.addEventListener('click', (e) => {
+                if(e.target === panelDiv) {
+                    activeMemePanelIndex = i;
+                    memeImageUpload.click();
+                }
+            });
+
+            textWrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                memeCanvasContainer.querySelectorAll('.meme-text-wrapper.selected').forEach(el => el.classList.remove('selected'));
+                textWrapper.classList.add('selected');
+            });
+
+            textWrapper.addEventListener('dblclick', (e) => {
+                 e.stopPropagation();
+                 textSpan.setAttribute('contenteditable', 'true');
+                 textSpan.style.pointerEvents = 'auto';
+                 textSpan.focus();
+                 
+                 const selection = window.getSelection();
+                 const range = document.createRange();
+                 range.selectNodeContents(textSpan);
+                 selection?.removeAllRanges();
+                 selection?.addRange(range);
+
+                 const onBlur = () => {
+                     textSpan.setAttribute('contenteditable', 'false');
+                     textSpan.style.pointerEvents = 'none';
+                     const newText = textSpan.textContent || '';
+                     memePanelData[i].text = newText;
+                     textInput.value = newText;
+                     textSpan.removeEventListener('blur', onBlur);
+                 }
+                 textSpan.addEventListener('blur', onBlur);
+            });
+            
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                memePanelData[i].text = '';
+                textSpan.textContent = '';
+                textInput.value = '';
+            });
+
+            textWrapper.addEventListener('mousedown', (e) => handleTextInteractionStart(e, i, 'drag'));
+            leftHandle.addEventListener('mousedown', (e) => handleTextInteractionStart(e, i, 'resize-left'));
+            rightHandle.addEventListener('mousedown', (e) => handleTextInteractionStart(e, i, 'resize-right'));
+
+            memeCanvasContainer.appendChild(panelDiv);
+
+            textInput.addEventListener('input', () => {
+                const newText = textInput.value;
+                memePanelData[i].text = newText;
+                textSpan.textContent = newText;
+            });
+            memeTextInputsContainer.appendChild(textInput);
+        }
+        updateMemeTextStyles();
+    };
+
+    const handleTextInteractionStart = (e: MouseEvent, index: number, type: 'drag' | 'resize-left' | 'resize-right') => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = e.currentTarget as HTMLElement;
+        const wrapper = type === 'drag' ? target : target.parentElement as HTMLElement;
+        if (!wrapper) return;
+
+        memeTextInteraction = {
+            active: true,
+            type,
+            panelIndex: index,
+            startX: e.clientX,
+            startY: e.clientY,
+            startLeft: wrapper.offsetLeft,
+            startTop: wrapper.offsetTop,
+            startWidth: wrapper.offsetWidth,
+        };
+
+        document.addEventListener('mousemove', handleTextInteractionMove);
+        document.addEventListener('mouseup', handleTextInteractionEnd);
+    };
+
+    const handleTextInteractionMove = (e: MouseEvent) => {
+        if (!memeTextInteraction.active || memeTextInteraction.panelIndex === null) return;
+        e.preventDefault();
+
+        const { panelIndex, type, startX, startY, startLeft, startTop, startWidth } = memeTextInteraction;
+        const panel = memeCanvasContainer.querySelector(`.meme-panel[data-index="${panelIndex}"]`) as HTMLElement;
+        const wrapper = panel.querySelector('.meme-text-wrapper') as HTMLElement;
+        if (!panel || !wrapper) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if (type === 'drag') {
+            let newLeft = startLeft + dx;
+            let newTop = startTop + dy;
+            
+            newLeft = Math.max(0, Math.min(newLeft, panel.offsetWidth - wrapper.offsetWidth));
+            newTop = Math.max(0, Math.min(newTop, panel.offsetHeight - wrapper.offsetHeight));
+            
+            wrapper.style.left = `${newLeft}px`;
+            wrapper.style.top = `${newTop}px`;
+            wrapper.style.transform = 'translate(0, 0)'; 
+        } else {
+            let newWidth;
+            if (type === 'resize-right') {
+                newWidth = startWidth + dx;
+                newWidth = Math.max(20, Math.min(newWidth, panel.offsetWidth - wrapper.offsetLeft));
+                wrapper.style.width = `${newWidth}px`;
+            } else if (type === 'resize-left') {
+                newWidth = startWidth - dx;
+                let newLeft = startLeft + dx;
+
+                if (newWidth < 20) { newWidth = 20; newLeft = wrapper.offsetLeft; }
+                if (newLeft < 0) { newWidth += newLeft; newLeft = 0; }
+                
+                wrapper.style.width = `${newWidth}px`;
+                wrapper.style.left = `${newLeft}px`;
+            }
+        }
+    };
+    
+    const handleTextInteractionEnd = () => {
+        if (!memeTextInteraction.active || memeTextInteraction.panelIndex === null) return;
+
+        const { panelIndex } = memeTextInteraction;
+        const panel = memeCanvasContainer.querySelector(`.meme-panel[data-index="${panelIndex}"]`) as HTMLElement;
+        const wrapper = panel.querySelector('.meme-text-wrapper') as HTMLElement;
+        
+        if (panel && wrapper) {
+            const panelRect = panel.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+
+            const centerX = (wrapperRect.left - panelRect.left) + (wrapperRect.width / 2);
+            const centerY = (wrapperRect.top - panelRect.top) + (wrapperRect.height / 2);
+
+            memePanelData[panelIndex].x = (centerX / panelRect.width) * 100;
+            memePanelData[panelIndex].y = (centerY / panelRect.height) * 100;
+            memePanelData[panelIndex].width = (wrapperRect.width / panelRect.width) * 100;
+
+            wrapper.style.left = `${memePanelData[panelIndex].x}%`;
+            wrapper.style.top = `${memePanelData[panelIndex].y}%`;
+            wrapper.style.width = `${memePanelData[panelIndex].width}%`;
+            wrapper.style.transform = 'translate(-50%, -50%)';
+        }
+
+        memeTextInteraction = { active: false, type: null, panelIndex: null, startX: 0, startY: 0, startLeft: 0, startTop: 0, startWidth: 0 };
+        document.removeEventListener('mousemove', handleTextInteractionMove);
+        document.removeEventListener('mouseup', handleTextInteractionEnd);
+    };
+
+
+    const handleMemeImageUpload = (event: Event) => {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    memePanelData[activeMemePanelIndex].imageUrl = e.target.result as string;
+                    renderMemePreview();
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+            input.value = ''; 
+        }
+    };
+
+    const updateMemeWatermark = () => {
+        memeWatermarkOverlay.classList.remove('hidden');
+        const opacity = memeWatermarkOpacitySlider.value;
+        const size = memeWatermarkSizeSlider.value;
+        memeWatermarkOverlay.style.opacity = (parseInt(opacity) / 100).toString();
+
+        if (currentMemeWatermarkType === 'text') {
+            const text = memeWatermarkTextInput.value;
+            const color = memeWatermarkColorInput.value;
+            if (!text) {
+                memeWatermarkOverlay.classList.add('hidden');
+                return;
+            }
+            memeWatermarkOverlay.innerHTML = `<span>${text}</span>`;
+            const span = memeWatermarkOverlay.querySelector('span');
+            if (span) {
+                span.style.color = color;
+                span.style.fontSize = `${size}px`;
+            }
+            memeWatermarkOverlay.style.width = 'auto';
+            memeWatermarkOverlay.style.height = 'auto';
+        } else {
+            const imageEl = memeWatermarkOverlay.querySelector('img');
+            if (!imageEl) {
+                memeWatermarkOverlay.classList.add('hidden');
+                return;
+            }
+            memeWatermarkOverlay.style.width = `${parseInt(size) * 3}px`;
+            memeWatermarkOverlay.style.height = 'auto';
+        }
+    };
+
+    const handleMemeWatermarkImageUpload = (event: Event) => {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    memeWatermarkOverlay.innerHTML = `<img src="${e.target.result as string}" alt="watermark">`;
+                    updateMemeWatermark();
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+    
+    const removeMemeWatermark = () => {
+        memeWatermarkOverlay.classList.add('hidden');
+        memeWatermarkOverlay.innerHTML = '';
+        memeWatermarkTextInput.value = '';
+        memeWatermarkUpload.value = '';
+    };
+
+    const startMemeWatermarkDrag = (e: MouseEvent) => {
+        e.preventDefault();
+        isDraggingMemeWatermark = true;
+        memeWatermarkDragStartX = e.clientX;
+        memeWatermarkDragStartY = e.clientY;
+        memeWatermarkElementStartX = memeWatermarkOverlay.offsetLeft;
+        memeWatermarkElementStartY = memeWatermarkOverlay.offsetTop;
+        document.addEventListener('mousemove', doMemeWatermarkDrag);
+        document.addEventListener('mouseup', stopMemeWatermarkDrag);
+    };
+    
+    const doMemeWatermarkDrag = (e: MouseEvent) => {
+        if (!isDraggingMemeWatermark) return;
+        e.preventDefault();
+        const dx = e.clientX - memeWatermarkDragStartX;
+        const dy = e.clientY - memeWatermarkDragStartY;
+        let newTop = Math.max(0, Math.min(memeWatermarkElementStartY + dy, memeCaptureWrapper.clientHeight - memeWatermarkOverlay.offsetHeight));
+        let newLeft = Math.max(0, Math.min(memeWatermarkElementStartX + dx, memeCaptureWrapper.clientWidth - memeWatermarkOverlay.offsetWidth));
+        memeWatermarkOverlay.style.top = `${newTop}px`;
+        memeWatermarkOverlay.style.left = `${newLeft}px`;
+    };
+    
+    const stopMemeWatermarkDrag = () => {
+        isDraggingMemeWatermark = false;
+        document.removeEventListener('mousemove', doMemeWatermarkDrag);
+        document.removeEventListener('mouseup', stopMemeWatermarkDrag);
+    };
+
+    const generateAndDownloadMeme = async () => {
+        generateMemeBtn.disabled = true;
+        generateMemeBtn.textContent = 'Generando...';
+        
+        memeCanvasContainer.querySelectorAll('.meme-text-wrapper.selected').forEach(el => el.classList.remove('selected'));
+        memeCaptureWrapper.classList.add('capturing');
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        try {
+            const canvas = await html2canvas(memeCaptureWrapper, { useCORS: true, backgroundColor: memeBgColorInput.value });
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `meme-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Error al generar el meme:", error);
+            alert("No se pudo generar la imagen del meme.");
+        } finally {
+            memeCaptureWrapper.classList.remove('capturing');
+            generateMemeBtn.disabled = false;
+            generateMemeBtn.textContent = 'Generar y Descargar';
+        }
+    };
+
+    const initMemeGenerator = () => {
+        memeLayoutSelector.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            const button = target.closest('.layout-btn');
+            if (button instanceof HTMLElement && button.dataset.layout) {
+                currentMemeLayout = button.dataset.layout;
+                memeLayoutSelector.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderMemePreview();
+            }
+        });
+
+        memeGutterSlider.addEventListener('input', () => {
+            memeCanvasContainer.style.gap = `${memeGutterSlider.value}px`;
+            memeGutterValue.textContent = memeGutterSlider.value;
+        });
+
+        memeBgColorInput.addEventListener('input', () => {
+            memeCanvasContainer.style.backgroundColor = memeBgColorInput.value;
+        });
+
+        memeFontSelector.addEventListener('change', updateMemeTextStyles);
+        memeTextColorInput.addEventListener('input', updateMemeTextStyles);
+        memeBorderColorInput.addEventListener('input', updateMemeTextStyles);
+        memeBorderThicknessSlider.addEventListener('input', updateMemeTextStyles);
+        memeFontSizeSlider.addEventListener('input', updateMemeTextStyles);
+
+        memeImageUpload.addEventListener('change', handleMemeImageUpload);
+        generateMemeBtn.addEventListener('click', generateAndDownloadMeme);
+
+        // Watermark Listeners
+        memeWatermarkTextTab.addEventListener('click', () => {
+            currentMemeWatermarkType = 'text';
+            memeWatermarkTextTab.classList.add('active');
+            memeWatermarkImageTab.classList.remove('active');
+            memeWatermarkTextOptions.classList.remove('hidden');
+            memeWatermarkImageOptions.classList.add('hidden');
+            const sizeLabel = document.querySelector('#meme-generator-view .watermark-slider label[for="meme-watermark-size"]') as HTMLLabelElement;
+            if (sizeLabel) sizeLabel.textContent = 'Tamaño:';
+            updateMemeWatermark();
+        });
+        memeWatermarkImageTab.addEventListener('click', () => {
+            currentMemeWatermarkType = 'image';
+            memeWatermarkImageTab.classList.add('active');
+            memeWatermarkTextTab.classList.remove('active');
+            memeWatermarkImageOptions.classList.remove('hidden');
+            memeWatermarkTextOptions.classList.add('hidden');
+            const sizeLabel = document.querySelector('#meme-generator-view .watermark-slider label[for="meme-watermark-size"]') as HTMLLabelElement;
+            if(sizeLabel) sizeLabel.textContent = 'Ancho:';
+            updateMemeWatermark();
+        });
+        memeWatermarkTextInput.addEventListener('input', updateMemeWatermark);
+        memeWatermarkColorInput.addEventListener('input', updateMemeWatermark);
+        memeWatermarkSizeSlider.addEventListener('input', updateMemeWatermark);
+        memeWatermarkOpacitySlider.addEventListener('input', updateMemeWatermark);
+        memeWatermarkUpload.addEventListener('change', handleMemeWatermarkImageUpload);
+        memeRemoveWatermarkBtn.addEventListener('click', removeMemeWatermark);
+        memeWatermarkOverlay.addEventListener('mousedown', startMemeWatermarkDrag);
+        
+        // Deselect text when clicking outside
+        document.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('.meme-text-wrapper') && !target.closest('#meme-text-inputs-container') && !target.closest('.meme-controls')) {
+                 memeCanvasContainer.querySelectorAll('.meme-text-wrapper.selected').forEach(el => el.classList.remove('selected'));
+            }
+        });
+
+        // Initial render
+        (memeLayoutSelector.querySelector(`[data-layout="${currentMemeLayout}"]`) as HTMLElement)?.classList.add('active');
+        renderMemePreview();
+    };
+
     // --- Event Listeners ---
+    apiKeyInput.addEventListener('change', initializeAi);
     tabChatGenerator.addEventListener('click', () => setActiveTab('chat'));
     tabPostGenerator.addEventListener('click', () => setActiveTab('post'));
     tabImagePostGenerator.addEventListener('click', () => setActiveTab('image-post'));
+    tabFacebookPostGenerator.addEventListener('click', () => setActiveTab('facebook-post'));
+    tabMemeGenerator.addEventListener('click', () => setActiveTab('meme'));
 
 
     // Chat listeners
@@ -988,7 +1806,10 @@ const App = () => {
     downloadFullBtn.addEventListener('click', () => downloadChatScreenshot(chatWindow, `captura-completa-${Date.now()}.png`));
     downloadChatOnlyBtn.addEventListener('click', () => downloadChatScreenshot(chatMessagesContainer, `solo-chat-${Date.now()}.png`));
     backgroundUpload.addEventListener('change', handleBackgroundChange);
-    changeApiKeyBtn.addEventListener('click', () => { localStorage.removeItem('gemini-api-key'); (ai as any) = undefined; initApiKeyUI(); });
+    changeApiKeyBtn.addEventListener('click', () => { 
+        localStorage.removeItem('gemini-api-key'); 
+        initApiKeyUI(); 
+    });
     imageUploadInput.addEventListener('change', (event) => { const input = event.target as HTMLInputElement; if (input.files && input.files[0] && imageUploadTarget.sender && imageUploadTarget.index !== null) { const reader = new FileReader(); reader.onload = (e) => { if (e.target?.result) { const newMessage: Message = { sender: imageUploadTarget.sender!, imageUrl: e.target.result as string, isSticker: imageUploadTarget.isSticker || false, timestamp: getCurrentTimestamp(), status: imageUploadTarget.sender === 'Persona 2' ? 'delivered' : undefined }; currentConversation.splice(imageUploadTarget.index!, 0, newMessage); displayMessages(); } imageUploadTarget = { sender: null, index: null, isSticker: false }; input.value = ''; }; reader.readAsDataURL(input.files[0]); } });
     profilePicContainer.addEventListener('click', () => profilePicUpload.click());
     profilePicUpload.addEventListener('change', (event: Event) => { const input = event.target as HTMLInputElement; if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = (e) => { if (e.target?.result) { profilePicImg.src = e.target.result as string; if(defaultProfileIcon) defaultProfileIcon.style.display = 'none'; } }; reader.readAsDataURL(input.files[0]); } });
@@ -1100,7 +1921,8 @@ const App = () => {
     imagePostRemoveWatermarkBtn.addEventListener('click', removeImagePostWatermark);
     imagePostWatermarkOverlay.addEventListener('mousedown', startImagePostWatermarkDrag);
     imagePostModeManualBtn.addEventListener('click', () => switchImagePostGenMode('manual'));
-    imagePostModeAiBtn.addEventListener('click', () => switchImagePostGenMode('ai'));
+    imagePostModeAiTopicBtn.addEventListener('click', () => switchImagePostGenMode('ai-topic'));
+    imagePostModeAiImageBtn.addEventListener('click', () => switchImagePostGenMode('ai-image'));
     generateImagePostsBtn.addEventListener('click', generateImagePosts);
     imagePostDownloadAllZipBtn.addEventListener('click', () => downloadAllAsZip(generatedImagePostCanvases, 'generated_image_posts.zip'));
     imagePostTextsInput.addEventListener('input', () => {
@@ -1117,6 +1939,8 @@ const App = () => {
     switchPostGenMode('manual');
     switchImagePostGenMode('manual');
     setActiveImagePostTemplate('facebook');
+    initFacebookPostGenerator();
+    initMemeGenerator();
     // Set initial font and alignment for image post preview
     imagePostFontSelector.value = 'Roboto';
     imagePostPreviewTitle.style.fontFamily = 'Roboto, sans-serif';
