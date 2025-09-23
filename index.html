@@ -28,6 +28,8 @@
                 <button id="tab-chat-generator" class="tab-btn active">Generador de Chats</button>
                 <button id="tab-post-generator" class="tab-btn">Generador de Posts (Texto)</button>
                 <button id="tab-image-post-generator" class="tab-btn">Generador Posts con Imagen</button>
+                <button id="tab-facebook-post-generator" class="tab-btn">Generador Post Facebook</button>
+                <button id="tab-meme-generator" class="tab-btn">Meme / Cómic</button>
             </div>
 
             <div class="api-key-container">
@@ -403,7 +405,8 @@
                         <h3>5. Elige el Modo de Títulos</h3>
                         <div class="mode-selector">
                             <button id="image-post-mode-manual-btn" class="mode-btn active" type="button">Manual</button>
-                            <button id="image-post-mode-ai-btn" class="mode-btn" type="button">Generar con IA</button>
+                            <button id="image-post-mode-ai-topic-btn" class="mode-btn" type="button">Generar con IA (Tema)</button>
+                            <button id="image-post-mode-ai-image-btn" class="mode-btn" type="button" disabled title="Sube una imagen primero">Sugerir por Imagen</button>
                         </div>
 
                         <div id="image-post-manual-input-container">
@@ -413,7 +416,7 @@
 
                         <div id="image-post-ai-input-container" class="hidden">
                             <h3>6. Define el Contenido de Títulos</h3>
-                            <div class="form-group">
+                            <div class="form-group" id="image-post-ai-topic-group">
                                 <label for="image-post-ai-topic">Tema Principal</label>
                                 <input type="text" id="image-post-ai-topic" placeholder="Ej: Frases motivacionales sobre el éxito">
                             </div>
@@ -487,9 +490,200 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Vista del Generador de Posts de Facebook -->
+            <div id="facebook-post-generator-view" class="hidden">
+                <div class="fb-post-layout">
+                    <div class="fb-controls">
+                        <div class="fb-form-group">
+                            <label for="fb-person-name">Figura Pública</label>
+                            <input type="text" id="fb-person-name" placeholder="Ej: Elon Musk, Taylor Swift...">
+                        </div>
+
+                        <div class="fb-form-group">
+                            <label>Filtro Temporal (Opcional)</label>
+                             <div class="fb-date-filters">
+                                <select id="fb-year-select"></select>
+                                <select id="fb-month-select"></select>
+                                <select id="fb-day-select"></select>
+                            </div>
+                            <p id="fb-date-error" class="fb-date-error hidden">No se pueden seleccionar fechas futuras.</p>
+                        </div>
+
+                        <div class="fb-form-group">
+                            <label for="fb-tone-select">Tono del Post</label>
+                            <select id="fb-tone-select">
+                                <option value="Automático">Automático (Recomendado)</option>
+                                <option value="Profesional">Profesional</option>
+                                <option value="Entusiasta">Entusiasta</option>
+                                <option value="Divertido">Divertido</option>
+                                <option value="Informativo">Informativo</option>
+                                <option value="Nostálgico">Nostálgico</option>
+                                <option value="Sarcástico">Sarcástico</option>
+                                <option value="Informal">Informal</option>
+                                <option value="Polémico">Polémico</option>
+                                <option value="Curioso">Curioso</option>
+                                <option value="Urgente">Urgente</option>
+                                <option value="Inspirador">Inspirador</option>
+                                <option value="Analítico">Analítico</option>
+                            </select>
+                        </div>
+
+                        <div class="fb-form-group">
+                            <label>Longitud del Post</label>
+                            <div class="fb-segmented-control" id="fb-length-selector">
+                                <button type="button" data-length="corta">Corta</button>
+                                <button type="button" data-length="media" class="active">Media</button>
+                                <button type="button" data-length="larga">Larga</button>
+                            </div>
+                        </div>
+
+                        <button type="button" id="fb-generate-btn" disabled>Generar Post</button>
+                    </div>
+
+                    <div class="fb-results-area">
+                        <div id="fb-results-container" class="hidden">
+                            <div class="fb-post-card">
+                                <div class="fb-card-header">
+                                    <h3>Post Generado</h3>
+                                    <button id="fb-copy-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                          <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                          <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>
+                                        </svg>
+                                        Copiar
+                                    </button>
+                                </div>
+                                <div id="fb-generated-text"></div>
+                            </div>
+                            <div class="fb-sources-card">
+                                <h3>Fuentes Utilizadas</h3>
+                                <ul id="fb-sources-list"></ul>
+                            </div>
+                        </div>
+
+                        <div id="fb-initial-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <h2>Generador de Posts de Facebook</h2>
+                                <p>Introduce el nombre de una figura pública y ajusta los filtros para crear un post basado en noticias y eventos reales.</p>
+                        </div>
+                         <div id="fb-loader" class="hidden">
+                            <div class="spinner"></div>
+                            <p>Buscando noticias y creando el post...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Vista del Generador de Memes / Cómics -->
+            <div id="meme-generator-view" class="hidden">
+                <div class="meme-generator-layout">
+                    <div class="meme-controls">
+                        <h3>1. Elige un Diseño</h3>
+                        <div id="meme-layout-selector" class="template-selector grid-selector">
+                            <button class="layout-btn" data-layout="1f" title="1 Panel">1 Panel</button>
+                            <button class="layout-btn" data-layout="2v" title="2 Paneles Verticales">2 Vert</button>
+                            <button class="layout-btn" data-layout="2h" title="2 Paneles Horizontales">2 Horiz</button>
+                            <button class="layout-btn" data-layout="3v" title="3 Paneles Verticales">3 Vert</button>
+                            <button class="layout-btn" data-layout="4g" title="4 Paneles (Cuadrícula 2x2)">4 Grid</button>
+                            <button class="layout-btn" data-layout="6g" title="6 Paneles (Cuadrícula 2x3)">6 Grid</button>
+                        </div>
+
+                        <h3>2. Personaliza Diseño</h3>
+                        <div class="form-group">
+                             <label for="meme-gutter-slider">Espaciado: <span id="meme-gutter-value">4</span>px</label>
+                             <input type="range" id="meme-gutter-slider" min="0" max="30" value="4">
+                        </div>
+                         <div class="form-group">
+                             <label for="meme-bg-color">Color de fondo</label>
+                             <input type="color" id="meme-bg-color" value="#FFFFFF">
+                        </div>
+                        
+                        <h3>3. Estilo de Texto</h3>
+                        <div class="form-group">
+                            <label for="meme-font-selector">Fuente del Texto</label>
+                             <select id="meme-font-selector">
+                                <option value="Oswald">Oswald</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Lato">Lato</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Raleway">Raleway</option>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Merriweather">Merriweather</option>
+                                <option value="Lobster">Lobster</option>
+                                <option value="Pacifico">Pacifico</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meme-text-color">Color Texto</label>
+                                <input type="color" id="meme-text-color" value="#FFFFFF">
+                            </div>
+                            <div class="form-group">
+                                <label for="meme-border-color">Color Borde</label>
+                                <input type="color" id="meme-border-color" value="#000000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="meme-font-size-slider">Tamaño Texto: <span id="meme-font-size-value">24</span>px</label>
+                            <input type="range" id="meme-font-size-slider" min="10" max="100" value="24">
+                        </div>
+                        <div class="form-group">
+                            <label for="meme-border-thickness">Grosor Borde: <span id="meme-border-thickness-value">2</span>px</label>
+                            <input type="range" id="meme-border-thickness" min="0" max="10" value="2">
+                        </div>
+
+                        <h3>4. Marca de Agua (Opcional)</h3>
+                        <div class="form-group">
+                            <div class="watermark-controls">
+                                <div class="watermark-tabs">
+                                    <button type="button" id="meme-watermark-text-tab" class="active" title="Usar texto como marca de agua">Texto</button>
+                                    <button type="button" id="meme-watermark-image-tab" title="Usar imagen como marca de agua">Imagen</button>
+                                </div>
+                                <div id="meme-watermark-text-options">
+                                    <input type="text" id="meme-watermark-text" placeholder="Escribe tu texto">
+                                    <input type="color" id="meme-watermark-color" value="#FFFFFF" title="Color del texto">
+                                </div>
+                                <div id="meme-watermark-image-options" class="hidden">
+                                    <label for="meme-watermark-upload" class="file-upload-label">Subir Imagen de Marca</label>
+                                    <input type="file" id="meme-watermark-upload" class="file-upload-input" accept="image/*">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="meme-watermark-size">Tamaño:</label>
+                                    <input type="range" id="meme-watermark-size" min="10" max="100" value="30" title="Ajustar tamaño">
+                                </div>
+                                <div class="watermark-slider">
+                                    <label for="meme-watermark-opacity">Opacidad:</label>
+                                    <input type="range" id="meme-watermark-opacity" min="0" max="100" value="50" title="Ajustar opacidad">
+                                </div>
+                                <button type="button" id="meme-remove-watermark-btn" title="Quitar la marca de agua">Quitar Marca</button>
+                            </div>
+                        </div>
+
+                        <h3>5. Añade Textos</h3>
+                        <div id="meme-text-inputs-container" class="form-group">
+                            <!-- Los inputs de texto se generarán aquí dinámicamente -->
+                        </div>
+
+                        <button type="button" id="generate-meme-btn">Generar y Descargar</button>
+                    </div>
+                    <div class="meme-preview-area">
+                         <h3>Previsualización (Haz clic en un panel para subir imagen)</h3>
+                         <div id="meme-capture-wrapper" style="position: relative;">
+                            <div id="meme-canvas-container">
+                                <!-- Los paneles de imagen se generarán aquí dinámicamente -->
+                            </div>
+                            <div id="meme-watermark-overlay" class="hidden"></div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
     <input type="file" id="image-upload-input" class="file-upload-input" accept="image/*">
+    <input type="file" id="meme-image-upload" class="file-upload-input" accept="image/*">
     <script type="module" src="index.js"></script>
 </body>
 </html>
