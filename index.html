@@ -398,7 +398,7 @@ _blank">Obtén tu clave aquí.</a></p>
                          <div class="mode-selector">
                              <button id="image-post-mode-manual-btn" class="mode-btn active">Manual</button>
                              <button id="image-post-mode-ai-topic-btn" class="mode-btn">IA (por tema)</button>
-                             <button id="image-post-mode-ai-image-btn" class="mode-btn" disabled>IA (sugerir de imagen)</button>
+                             <button id="image-post-mode-ai-image-btn" class="mode-btn" disabled>IA (Analizar Imagen)</button>
                          </div>
                          <div id="image-post-manual-input-container">
                              <div class="form-group">
@@ -439,6 +439,24 @@ _blank">Obtén tu clave aquí.</a></p>
                                         <option value="pure_dramatic">🎭 Dramático</option>
                                     </optgroup>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="image-post-ai-reaction">Objetivo (Reacción Buscada)</label>
+                                <select id="image-post-ai-reaction">
+                                    <option value="risa e identificación">Risa e Identificación</option>
+                                    <option value="polémica y debate">Polémica y Debate</option>
+                                    <option value="comentarios y participación">Comentarios y Participación</option>
+                                    <option value="reflexión profunda">Reflexión Profunda</option>
+                                    <option value="inspiración y motivación">Inspiración y Motivación</option>
+                                </select>
+                            </div>
+                             <div class="form-group">
+                                <label>Longitud Máxima</label>
+                                <div id="image-post-ai-length-selector" class="mode-selector">
+                                    <button class="mode-btn" data-length="muy corto">Muy Corto</button>
+                                    <button class="mode-btn" data-length="corto">Corto</button>
+                                    <button class="mode-btn active" data-length="medio">Medio</button>
+                                </div>
                             </div>
                              <div class="form-group">
                                 <label for="image-post-ai-quantity">Cantidad a Generar</label>
