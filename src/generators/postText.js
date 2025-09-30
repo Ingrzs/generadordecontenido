@@ -32,6 +32,7 @@ export const initPostTextGenerator = () => {
     const aiInputContainer = document.getElementById('ai-input-container');
     const aiTopicInput = document.getElementById('ai-topic');
     const aiToneSelect = document.getElementById('ai-tone');
+    const aiReactionSelect = document.getElementById('ai-reaction');
     const aiLengthSelector = document.getElementById('ai-length-selector');
     const aiQuantityInput = document.getElementById('ai-quantity');
     const fontSelector = document.getElementById('post-font-selector');
@@ -131,13 +132,13 @@ export const initPostTextGenerator = () => {
             modeManualBtn.classList.remove('active');
             aiInputContainer.classList.remove('hidden');
             manualInputContainer.classList.add('hidden');
-            generatePostsBtn.textContent = 'Generar Contenido y Posts';
+            generatePostsBtn.textContent = 'Generar Contenido y Frases';
         } else {
             modeManualBtn.classList.add('active');
             modeAiBtn.classList.remove('active');
             manualInputContainer.classList.remove('hidden');
             aiInputContainer.classList.add('hidden');
-            generatePostsBtn.textContent = 'Generar Posts';
+            generatePostsBtn.textContent = 'Generar Frases';
         }
     };
 
@@ -175,11 +176,11 @@ export const initPostTextGenerator = () => {
 
     const getLengthInstruction = (lengthKey) => {
         const lengthMap = {
-            'muy corto': 'Escribe un texto de 1 línea de longitud.',
-            'corto': 'Escribe un texto de 2 líneas de longitud.',
-            'medio': 'Escribe un texto de 3 a 4 líneas de longitud.'
+            'muy corto': '12 palabras',
+            'corto': '20 palabras',
+            'medio': '35 palabras'
         };
-        return lengthMap[lengthKey] || 'Escribe textos de longitud media (3 a 4 líneas).';
+        return lengthMap[lengthKey] || '35 palabras';
     };
 
     const generatePostTextsWithAI = async () => {
@@ -193,14 +194,19 @@ export const initPostTextGenerator = () => {
             throw new Error('Por favor, introduce un tema principal para la generación con IA.');
         }
         const toneKey = aiToneSelect.value;
+        const reaction = aiReactionSelect.value;
         const copywriterPersona = getToneInstruction(toneKey);
         const lengthInstruction = getLengthInstruction(currentAiLength);
         const quantity = aiQuantityInput.value;
 
-        const prompt = `Tu rol es el de: ${copywriterPersona}. Tu misión es crear ${quantity} textos para publicaciones en redes sociales sobre el siguiente tema: "${topic}".
-Parámetros adicionales:
-- Longitud: ${lengthInstruction}
-- No incluyas hashtags.
+        const prompt = `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre el siguiente tema: "${topic}".
+
+Reglas estrictas:
+- Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
+- Longitud: Máximo ${lengthInstruction} por frase.
+- Objetivo Principal: Las frases deben generar ${reaction}.
+- No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
+
 El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
 
         try {
