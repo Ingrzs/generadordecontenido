@@ -32,12 +32,14 @@ export const initPostTextGenerator = () => {
     const aiInputContainer = document.getElementById('ai-input-container');
     const aiTopicInput = document.getElementById('ai-topic');
     const aiToneSelect = document.getElementById('ai-tone');
+    const aiLengthSelector = document.getElementById('ai-length-selector');
     const aiQuantityInput = document.getElementById('ai-quantity');
     const fontSelector = document.getElementById('post-font-selector');
 
     // --- State ---
     let generatedPostCanvases = [];
     let currentPostGenMode = 'manual';
+    let currentAiLength = 'medio';
 
     const postsSchema = {
         type: Type.OBJECT,
@@ -171,6 +173,15 @@ export const initPostTextGenerator = () => {
         return toneMap[toneKey] || 'Actúa como un copywriter experto en redes sociales. Escribe en un tono neutro e informativo.';
     };
 
+    const getLengthInstruction = (lengthKey) => {
+        const lengthMap = {
+            'muy corto': 'Escribe un texto de 1 línea de longitud.',
+            'corto': 'Escribe un texto de 2 líneas de longitud.',
+            'medio': 'Escribe un texto de 3 a 4 líneas de longitud.'
+        };
+        return lengthMap[lengthKey] || 'Escribe textos de longitud media (3 a 4 líneas).';
+    };
+
     const generatePostTextsWithAI = async () => {
         const ai = getAiInstance();
         if (!ai) {
@@ -183,9 +194,14 @@ export const initPostTextGenerator = () => {
         }
         const toneKey = aiToneSelect.value;
         const copywriterPersona = getToneInstruction(toneKey);
+        const lengthInstruction = getLengthInstruction(currentAiLength);
         const quantity = aiQuantityInput.value;
 
-        const prompt = `Tu rol es el de: ${copywriterPersona}. Tu misión es crear ${quantity} textos para publicaciones en redes sociales sobre el siguiente tema: "${topic}". No incluyas hashtags. El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
+        const prompt = `Tu rol es el de: ${copywriterPersona}. Tu misión es crear ${quantity} textos para publicaciones en redes sociales sobre el siguiente tema: "${topic}".
+Parámetros adicionales:
+- Longitud: ${lengthInstruction}
+- No incluyas hashtags.
+El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
 
         try {
             const response = await ai.models.generateContent({
@@ -325,6 +341,15 @@ export const initPostTextGenerator = () => {
     modeManualBtn.addEventListener('click', () => switchPostGenMode('manual'));
     modeAiBtn.addEventListener('click', () => switchPostGenMode('ai'));
     
+    aiLengthSelector.addEventListener('click', (e) => {
+        const button = e.target.closest('.mode-btn');
+        if (button && button.dataset.length) {
+            currentAiLength = button.dataset.length;
+            aiLengthSelector.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+    });
+
     generatePostsBtn.addEventListener('click', generatePosts);
     downloadAllZipBtn.addEventListener('click', () => {
         if (generatedPostCanvases.length > 0) {
