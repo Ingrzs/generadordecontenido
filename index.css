@@ -2217,4 +2217,18 @@ span[contenteditable="true"] {
     #facebook-post-generator-view {
         padding: 16px;
     }
+
+    /* Fix para responsividad de generadores de posts */
+    #post-preview-template.post-template.facebook,
+    #post-preview-template.post-template.twitter,
+    #image-post-preview-template.post-template.facebook,
+    #image-post-preview-template.post-template.twitter {
+        width: 100%;
+        height: auto;
+    }
+
+    #results-grid img, #image-post-results-grid img {
+        max-width: 100%;
+        height: auto;
+    }
 }
