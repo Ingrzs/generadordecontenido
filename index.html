@@ -26,7 +26,7 @@
         <main>
             <div class="tabs-container">
                 <button id="tab-chat-generator" class="tab-btn active" data-tab="chat">Generador de Chats</button>
-                <button id="tab-post-generator" class="tab-btn" data-tab="post">Generador de Posts (Texto)</button>
+                <button id="tab-post-generator" class="tab-btn" data-tab="post">Generador de Frases</button>
                 <button id="tab-image-post-generator" class="tab-btn" data-tab="image-post">Generador Posts con Imagen</button>
                 <button id="tab-facebook-post-generator" class="tab-btn" data-tab="facebook-post">Generador Post Facebook</button>
                 <button id="tab-text-enhancer" class="tab-btn" data-tab="text-enhancer">Mejorador de Texto</button>
@@ -229,21 +229,21 @@ _blank">Obtén tu clave aquí.</a></p>
                             </select>
                         </div>
                         <!-- Controles de modo (Manual/IA) -->
-                        <h3>Modo de Contenido</h3>
+                        <h3>Modo de Creación</h3>
                         <div class="mode-selector">
                             <button id="mode-manual-btn" class="mode-btn active">Manual</button>
                             <button id="mode-ai-btn" class="mode-btn">Usar IA</button>
                         </div>
                         <div id="manual-input-container">
                              <div class="form-group">
-                                <label for="post-texts-input">Textos de los Posts (uno por línea)</label>
-                                <textarea id="post-texts-input" rows="8" placeholder="Escribe el texto del primer post aquí...&#10;Y el segundo aquí..."></textarea>
+                                <label for="post-texts-input">Frases (una por línea)</label>
+                                <textarea id="post-texts-input" rows="8" placeholder="Escribe la primera frase aquí...&#10;Y la segunda aquí..."></textarea>
                             </div>
                         </div>
                         <div id="ai-input-container" class="hidden">
                             <div class="form-group">
                                 <label for="ai-topic">Tema Principal</label>
-                                <input type="text" id="ai-topic" placeholder="Ej: Beneficios de la meditación">
+                                <input type="text" id="ai-topic" placeholder="Ej: El desamor, la vida en la oficina">
                             </div>
                              <div class="form-group">
                                 <label for="ai-tone">Tono</label>
@@ -275,7 +275,17 @@ _blank">Obtén tu clave aquí.</a></p>
                                 </select>
                             </div>
                              <div class="form-group">
-                                <label>Longitud del Post</label>
+                                <label for="ai-reaction">Objetivo (Reacción Buscada)</label>
+                                <select id="ai-reaction">
+                                    <option value="risa e identificación">Risa e Identificación</option>
+                                    <option value="polémica y debate">Polémica y Debate</option>
+                                    <option value="comentarios y participación">Comentarios y Participación</option>
+                                    <option value="reflexión profunda">Reflexión Profunda</option>
+                                    <option value="inspiración y motivación">Inspiración y Motivación</option>
+                                </select>
+                            </div>
+                             <div class="form-group">
+                                <label>Longitud Máxima</label>
                                 <div id="ai-length-selector" class="mode-selector">
                                     <button class="mode-btn" data-length="muy corto">Muy Corto</button>
                                     <button class="mode-btn" data-length="corto">Corto</button>
@@ -283,7 +293,7 @@ _blank">Obtén tu clave aquí.</a></p>
                                 </div>
                             </div>
                              <div class="form-group">
-                                <label for="ai-quantity">Cantidad de Posts a Generar</label>
+                                <label for="ai-quantity">Cantidad de Frases a Generar</label>
                                 <input type="number" id="ai-quantity" value="3" min="1" max="10">
                             </div>
                         </div>
