@@ -10,26 +10,28 @@ export const getCurrentTimestamp = () => {
 
 
 /**
- * Converts multiple canvas elements to blobs and downloads them as a zip file.
- * @param {HTMLCanvasElement[]} canvases - An array of canvas elements to download.
+ * Converts multiple HTML elements to blobs via html2canvas and downloads them as a zip file.
+ * @param {HTMLElement[]} elements - An array of HTML elements to capture and download.
  * @param {string} zipName - The name of the zip file (without extension).
  */
-export const downloadAllAsZip = async (canvases, zipName) => {
-    if (!window.JSZip) {
-        alert('La librería para crear archivos ZIP no está disponible.');
+export const downloadAllAsZip = async (elements, zipName) => {
+    if (!window.JSZip || !window.html2canvas) {
+        alert('Las librerías para crear archivos ZIP o para generar imágenes no están disponibles.');
         return;
     }
     const zip = new JSZip();
 
-    for (let i = 0; i < canvases.length; i++) {
-        const canvas = canvases[i];
+    for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
         try {
+            // Generate canvas from the element on the fly
+            const canvas = await html2canvas(element, { useCORS: true, backgroundColor: '#ffffff' });
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
             if(blob) {
                 zip.file(`${zipName}_${i + 1}.png`, blob);
             }
         } catch (error) {
-            console.error(`Error al procesar el canvas ${i + 1}:`, error);
+            console.error(`Error al procesar el elemento ${i + 1}:`, error);
         }
     }
 
