@@ -1,3 +1,5 @@
+
+
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { makeEditable } from "../utils/ui.js";
@@ -27,10 +29,15 @@ export const initPostTextGenerator = () => {
     const postGeneratorLoaderText = postGeneratorLoader.querySelector('p');
     const textAlignSelector = document.getElementById('text-align-selector');
     const modeManualBtn = document.getElementById('mode-manual-btn');
-    const modeAiBtn = document.getElementById('mode-ai-btn');
+    const modeAiTopicBtn = document.getElementById('mode-ai-topic-btn');
+    const modeAiTrendBtn = document.getElementById('mode-ai-trend-btn');
     const manualInputContainer = document.getElementById('manual-input-container');
     const aiInputContainer = document.getElementById('ai-input-container');
+    const aiTopicGroup = document.getElementById('ai-topic-group');
     const aiTopicInput = document.getElementById('ai-topic');
+    const aiTrendGroup = document.getElementById('ai-trend-group');
+    const aiTrendTopicInput = document.getElementById('ai-trend-topic');
+    const aiTrendDateFilter = document.getElementById('ai-trend-date-filter');
     const aiToneSelect = document.getElementById('ai-tone');
     const aiReactionSelect = document.getElementById('ai-reaction');
     const aiLengthSelector = document.getElementById('ai-length-selector');
@@ -38,7 +45,6 @@ export const initPostTextGenerator = () => {
     const fontSelector = document.getElementById('post-font-selector');
 
     // --- State ---
-    let generatedPostCanvases = [];
     let currentPostGenMode = 'manual';
     let currentAiLength = 'medio';
 
@@ -127,18 +133,33 @@ export const initPostTextGenerator = () => {
 
     const switchPostGenMode = (mode) => {
         currentPostGenMode = mode;
-        if (mode === 'ai') {
-            modeAiBtn.classList.add('active');
-            modeManualBtn.classList.remove('active');
-            aiInputContainer.classList.remove('hidden');
-            manualInputContainer.classList.add('hidden');
-            generatePostsBtn.textContent = 'Generar Contenido y Frases';
-        } else {
-            modeManualBtn.classList.add('active');
-            modeAiBtn.classList.remove('active');
-            manualInputContainer.classList.remove('hidden');
-            aiInputContainer.classList.add('hidden');
-            generatePostsBtn.textContent = 'Generar Frases';
+        [modeManualBtn, modeAiTopicBtn, modeAiTrendBtn].forEach(btn => btn.classList.remove('active'));
+        
+        // Hide all containers first
+        manualInputContainer.style.display = 'none';
+        aiInputContainer.classList.add('hidden');
+        aiTopicGroup.classList.add('hidden');
+        aiTrendGroup.classList.add('hidden');
+
+        switch (mode) {
+            case 'ai-topic':
+                modeAiTopicBtn.classList.add('active');
+                aiInputContainer.classList.remove('hidden');
+                aiTopicGroup.classList.remove('hidden');
+                generatePostsBtn.textContent = 'Generar por Tema';
+                break;
+            case 'ai-trend':
+                modeAiTrendBtn.classList.add('active');
+                aiInputContainer.classList.remove('hidden');
+                aiTrendGroup.classList.remove('hidden');
+                generatePostsBtn.textContent = 'Generar por Tendencia';
+                break;
+            case 'manual':
+            default:
+                modeManualBtn.classList.add('active');
+                manualInputContainer.style.display = 'block';
+                generatePostsBtn.textContent = 'Generar Posts';
+                break;
         }
     };
 
@@ -165,7 +186,7 @@ export const initPostTextGenerator = () => {
             'pure_polemic': 'Adopta un tono puramente polémico. Tu objetivo es dividir opiniones de forma directa. Usa absolutos, juicios y frases tajantes sin ambigüedad.' + baseInstruction,
             'pure_humorous': 'Adopta un tono puramente humorístico. Tu objetivo es hacer reír o entretener de forma ligera. Usa juegos de palabras, exageraciones y observaciones graciosas de lo cotidiano.' + baseInstruction,
             'pure_ironic': 'Adopta un tono puramente irónico. Tu objetivo es señalar lo absurdo diciendo exactamente lo contrario. Usa un sarcasmo elegante y críticas indirectas.' + baseInstruction,
-            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas y frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
+            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas o frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
             'pure_emotional': 'Adopta un tono puramente emocional. Tu objetivo es crear una conexión profunda y sentimental. Usa frases que exploren sentimientos universales como el dolor, el amor o la soledad.' + baseInstruction,
             'pure_critical': 'Adopta un tono puramente crítico. Tu objetivo es exponer una opinión fuerte y directa. Usa frases tajantes, juicios y declaraciones firmes sobre un tema.' + baseInstruction,
             'pure_motivational': 'Adopta un tono puramente motivacional. Tu objetivo es inspirar y empoderar al lector. Usa imperativos, frases de aliento y llamados a la acción.' + baseInstruction,
@@ -190,17 +211,19 @@ export const initPostTextGenerator = () => {
             throw new Error('Por favor, introduce tu clave API para usar la generación con IA.');
         }
 
-        const topic = aiTopicInput.value.trim();
-        if (!topic) {
-            throw new Error('Por favor, introduce un tema principal para la generación con IA.');
-        }
         const toneKey = aiToneSelect.value;
         const reaction = aiReactionSelect.value;
         const copywriterPersona = getToneInstruction(toneKey);
         const lengthInstruction = getLengthInstruction(currentAiLength);
         const quantity = aiQuantityInput.value;
 
-        const prompt = `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre el siguiente tema: "${topic}".
+        let prompt;
+        let config;
+
+        if (currentPostGenMode === 'ai-topic') {
+            const topic = aiTopicInput.value.trim();
+            prompt = topic
+                ? `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre el siguiente tema: "${topic}".
 
 Reglas estrictas:
 - Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
@@ -208,13 +231,24 @@ Reglas estrictas:
 - Objetivo Principal: Las frases deben generar ${reaction}.
 - No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
 
+El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`
+                : `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales, cada una sobre un tema completamente diferente y sin relación con las otras.
+
+Reglas estrictas:
+- Temas: Debes inventar los temas para cada frase. Asegúrate de que haya una gran diversidad. Por ejemplo, una frase puede ser sobre el desamor, otra sobre el trabajo, otra sobre una situación cómica del día a día, otra sobre motivación, etc. La clave es la máxima variedad posible entre las frases.
+- Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
+- Longitud: Máximo ${lengthInstruction} por frase.
+- Objetivo Principal: Las frases deben generar ${reaction}.
+- No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
+
 El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
 
-        try {
+            config = { responseMimeType: "application/json", responseSchema: postsSchema };
+            
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
                 contents: prompt,
-                config: { responseMimeType: "application/json", responseSchema: postsSchema }
+                config: config
             });
             const parsedJson = JSON.parse(response.text.trim());
             if (parsedJson.posts && parsedJson.posts.length > 0) {
@@ -222,66 +256,124 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
             } else {
                 throw new Error("La IA no devolvió ninguna publicación.");
             }
-        } catch (error) {
-            console.error("Error al generar texto con IA:", error);
-            throw new Error("Fallo al generar textos con la IA. Revisa la consola para más detalles.");
+
+        } else if (currentPostGenMode === 'ai-trend') {
+            const trendTopic = aiTrendTopicInput.value.trim();
+            if (!trendTopic) {
+                throw new Error("Por favor, introduce un tema de tendencia para buscar.");
+            }
+            
+            const dateFilterValue = aiTrendDateFilter.value;
+            let dateInstruction = '';
+            switch(dateFilterValue) {
+                case 'hour':
+                    dateInstruction = ' que ocurrieron en la última hora';
+                    break;
+                case 'today':
+                    dateInstruction = ' que ocurrieron hoy (en las últimas 24 horas)';
+                    break;
+                case 'yesterday':
+                    dateInstruction = ' que ocurrieron ayer';
+                    break;
+                case 'before_yesterday':
+                    dateInstruction = ' que ocurrieron antier';
+                    break;
+                case 'any':
+                default:
+                    dateInstruction = '';
+                    break;
+            }
+
+            prompt = `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales.
+
+Paso 1: Investigación.
+Primero, realiza una búsqueda en Google sobre las últimas noticias, conversaciones y tendencias relacionadas con el siguiente tema: "${trendTopic}"${dateInstruction}.
+
+Paso 2: Generación.
+Basándote en los resultados más relevantes y recientes de tu búsqueda, genera ${quantity} frases que cumplan con estos requisitos:
+- Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
+- Longitud: Máximo ${lengthInstruction} por frase.
+- Objetivo Principal: Las frases deben generar ${reaction}.
+- No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
+
+Paso 3: Formato de Salida Obligatorio.
+Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (sin \`\`\`json). El objeto debe tener una sola clave "posts", que es un array de strings, donde cada string es una de las frases generadas. Ejemplo: {"posts": ["frase 1", "frase 2"]}`;
+            
+            config = { tools: [{ googleSearch: {} }] };
+
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: config
+            });
+
+            let jsonString = response.text.trim();
+            if (jsonString.startsWith('```json')) {
+                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+            } else if (jsonString.startsWith('```')) {
+                jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            }
+
+            try {
+                const parsedJson = JSON.parse(jsonString);
+                if (parsedJson.posts && Array.isArray(parsedJson.posts)) {
+                    return parsedJson.posts;
+                }
+            } catch (e) {
+                console.error("Error al parsear la respuesta JSON de la búsqueda de tendencias:", e, "Respuesta recibida:", jsonString);
+                // Fallback: si no es JSON, intenta dividir por saltos de línea
+                const lines = jsonString.split('\n').filter(line => line.trim() && !line.includes('{') && !line.includes('}'));
+                if (lines.length > 0) return lines;
+                throw new Error("La respuesta de la IA sobre tendencias no pudo ser procesada.");
+            }
+            throw new Error("La IA no devolvió ninguna publicación en el formato esperado.");
+        } else {
+            throw new Error("Modo de generación AI no reconocido.");
         }
     };
     
-    const generatePostImages = async (texts) => {
+    const displayPostResults = (texts) => {
         resultsGrid.innerHTML = '';
         resultsHeader.classList.add('hidden');
-        generatedPostCanvases = [];
     
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        document.body.appendChild(tempContainer);
-    
-        for (const [index, text] of texts.entries()) {
+        if (texts.length === 0) return;
+
+        texts.forEach((text, index) => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item';
+
             const postClone = postPreviewTemplate.cloneNode(true);
+            postClone.removeAttribute('id'); // Ensure unique IDs
+            
             const textElement = postClone.querySelector('.post-text');
-            if (textElement) {
-                textElement.textContent = text;
-                // Ensure font style is cloned
-                textElement.style.fontFamily = postTextP.style.fontFamily;
-            }
-            tempContainer.appendChild(postClone);
-    
-            try {
-                const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
-                generatedPostCanvases.push(canvas);
-                
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'download-single-btn';
-                downloadBtn.textContent = 'Descargar';
-                downloadBtn.onclick = () => {
+            textElement.textContent = text;
+            textElement.style.fontFamily = postTextP.style.fontFamily; // Ensure font is copied
+
+            // Make text editable
+            textElement.addEventListener('click', () => makeEditable(textElement));
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-single-btn';
+            downloadBtn.textContent = 'Descargar';
+            downloadBtn.onclick = async () => {
+                try {
+                    const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
-                    link.href = img.src;
+                    link.href = canvas.toDataURL('image/png');
                     link.download = `post_${index + 1}.png`;
                     link.click();
-                };
-                
-                resultItem.appendChild(img);
-                resultItem.appendChild(downloadBtn);
-                resultsGrid.appendChild(resultItem);
-    
-            } catch (error) {
-                console.error(`Error al generar la imagen para el post ${index + 1}:`, error);
-            }
-            tempContainer.removeChild(postClone);
-        }
+                } catch (error) {
+                    console.error("Error al generar la imagen para el post:", error);
+                    alert("No se pudo generar la imagen.");
+                }
+            };
+            
+            resultItem.appendChild(postClone);
+            resultItem.appendChild(downloadBtn);
+            resultsGrid.appendChild(resultItem);
+        });
         
-        document.body.removeChild(tempContainer);
-        if (generatedPostCanvases.length > 0) {
-            resultsHeader.classList.remove('hidden');
-        }
+        resultsHeader.classList.remove('hidden');
     };
 
     const generatePosts = async () => {
@@ -289,21 +381,20 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
         try {
             let textsToGenerate = [];
 
-            if (currentPostGenMode === 'ai') {
+            if (currentPostGenMode.startsWith('ai')) {
                 togglePostLoading(true, 'Generando textos con IA...');
-                const generatedTexts = await generatePostTextsWithAI();
-                textsToGenerate = generatedTexts;
+                textsToGenerate = await generatePostTextsWithAI();
             } else { // Manual mode
                 textsToGenerate = postTextsInput.value.split('\n').filter(text => text.trim() !== '');
             }
 
             if (textsToGenerate.length === 0) {
                 alert('No hay textos para generar. Por favor, escribe o genera textos primero.');
-                return; // Stop execution
+                return;
             }
 
-            togglePostLoading(true, 'Generando imágenes...');
-            await generatePostImages(textsToGenerate);
+            togglePostLoading(true, 'Mostrando resultados editables...');
+            displayPostResults(textsToGenerate);
 
         } catch (error) {
             console.error("Error al generar posts:", error);
@@ -325,6 +416,8 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
     
     postNameSpan.addEventListener('click', () => makeEditable(postNameSpan, savePostTemplateData));
     postUsernameSpan.addEventListener('click', () => makeEditable(postUsernameSpan, savePostTemplateData));
+    postTextP.addEventListener('click', () => makeEditable(postTextP));
+
 
     fontSelector.addEventListener('change', updatePostFont);
     
@@ -346,7 +439,8 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
     });
 
     modeManualBtn.addEventListener('click', () => switchPostGenMode('manual'));
-    modeAiBtn.addEventListener('click', () => switchPostGenMode('ai'));
+    modeAiTopicBtn.addEventListener('click', () => switchPostGenMode('ai-topic'));
+    modeAiTrendBtn.addEventListener('click', () => switchPostGenMode('ai-trend'));
     
     aiLengthSelector.addEventListener('click', (e) => {
         const button = e.target.closest('.mode-btn');
@@ -359,8 +453,9 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
 
     generatePostsBtn.addEventListener('click', generatePosts);
     downloadAllZipBtn.addEventListener('click', () => {
-        if (generatedPostCanvases.length > 0) {
-            downloadAllAsZip(generatedPostCanvases, 'posts');
+        const postElements = resultsGrid.querySelectorAll('.post-template');
+        if (postElements.length > 0) {
+            downloadAllAsZip(Array.from(postElements), 'posts');
         } else {
             alert('No hay imágenes generadas para descargar.');
         }
