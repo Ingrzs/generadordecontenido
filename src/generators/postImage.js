@@ -1,3 +1,4 @@
+
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { createWatermarkManager } from "../utils/watermark.js";
@@ -43,11 +44,15 @@ export const initImagePostGenerator = () => {
     const modeManualBtn = document.getElementById('image-post-mode-manual-btn');
     const modeAiTopicBtn = document.getElementById('image-post-mode-ai-topic-btn');
     const modeAiImageBtn = document.getElementById('image-post-mode-ai-image-btn');
+    const modeAiTrendBtn = document.getElementById('image-post-mode-ai-trend-btn');
     const manualInputContainer = document.getElementById('image-post-manual-input-container');
     const textsInput = document.getElementById('image-post-texts-input');
     const aiInputContainer = document.getElementById('image-post-ai-input-container');
     const aiTopicGroup = document.getElementById('image-post-ai-topic-group');
     const aiTopicInput = document.getElementById('image-post-ai-topic');
+    const aiTrendGroup = document.getElementById('image-post-ai-trend-group');
+    const aiTrendTopicInput = document.getElementById('image-post-ai-trend-topic');
+    const aiTrendDateFilter = document.getElementById('image-post-ai-trend-date-filter');
     const aiToneSelect = document.getElementById('image-post-ai-tone');
     const aiReactionSelect = document.getElementById('image-post-ai-reaction');
     const aiLengthSelector = document.getElementById('image-post-ai-length-selector');
@@ -61,7 +66,6 @@ export const initImagePostGenerator = () => {
 
     // --- State ---
     let currentBaseImage = null; // Store base64 of the uploaded image
-    let generatedPostCanvases = [];
     let currentTitleMode = 'manual';
     let currentAiLength = 'medio';
 
@@ -118,7 +122,7 @@ export const initImagePostGenerator = () => {
             'pure_polemic': 'Adopta un tono puramente polémico. Tu objetivo es dividir opiniones de forma directa. Usa absolutos, juicios y frases tajantes sin ambigüedad.' + baseInstruction,
             'pure_humorous': 'Adopta un tono puramente humorístico. Tu objetivo es hacer reír o entretener de forma ligera. Usa juegos de palabras, exageraciones y observaciones graciosas de lo cotidiano.' + baseInstruction,
             'pure_ironic': 'Adopta un tono puramente irónico. Tu objetivo es señalar lo absurdo diciendo exactamente lo contrario. Usa un sarcasmo elegante y críticas indirectas.' + baseInstruction,
-            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas y frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
+            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas o frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
             'pure_emotional': 'Adopta un tono puramente emocional. Tu objetivo es crear una conexión profunda y sentimental. Usa frases que exploren sentimientos universales como el dolor, el amor o la soledad.' + baseInstruction,
             'pure_critical': 'Adopta un tono puramente crítico. Tu objetivo es exponer una opinión fuerte y directa. Usa frases tajantes, juicios y declaraciones firmes sobre un tema.' + baseInstruction,
             'pure_motivational': 'Adopta un tono puramente motivacional. Tu objetivo es inspirar y empoderar al lector. Usa imperativos, frases de aliento y llamados a la acción.' + baseInstruction,
@@ -168,6 +172,7 @@ export const initImagePostGenerator = () => {
             baseImgPreview.src = currentBaseImage;
             thumbnailContainer.classList.remove('hidden');
             modeAiImageBtn.disabled = false;
+            modeAiTrendBtn.disabled = false;
         };
         reader.readAsDataURL(file);
     };
@@ -194,27 +199,37 @@ export const initImagePostGenerator = () => {
     
     const switchTitleMode = (mode) => {
         currentTitleMode = mode;
-        [modeManualBtn, modeAiTopicBtn, modeAiImageBtn].forEach(btn => btn.classList.remove('active'));
-        manualInputContainer.classList.add('hidden');
+        [modeManualBtn, modeAiTopicBtn, modeAiImageBtn, modeAiTrendBtn].forEach(btn => btn.classList.remove('active'));
+        
+        // Hide all containers first
+        manualInputContainer.style.display = 'none';
         aiInputContainer.classList.add('hidden');
-        aiTopicGroup.style.display = 'block';
+        aiTopicGroup.classList.add('hidden');
+        aiTrendGroup.classList.add('hidden');
 
         switch(mode) {
             case 'ai-topic':
                 modeAiTopicBtn.classList.add('active');
                 aiInputContainer.classList.remove('hidden');
-                generateBtn.textContent = 'Generar Frases y Posts';
+                aiTopicGroup.classList.remove('hidden');
+                generateBtn.textContent = 'Generar por Tema';
                 break;
             case 'ai-image':
                 modeAiImageBtn.classList.add('active');
                 aiInputContainer.classList.remove('hidden');
-                aiTopicGroup.style.display = 'none'; // Hide topic input when using image
-                generateBtn.textContent = 'Analizar y Generar Posts';
+                // No specific group for ai-image, so aiTopicGroup and aiTrendGroup remain hidden
+                generateBtn.textContent = 'Analizar y Generar';
+                break;
+            case 'ai-trend':
+                modeAiTrendBtn.classList.add('active');
+                aiInputContainer.classList.remove('hidden');
+                aiTrendGroup.classList.remove('hidden');
+                generateBtn.textContent = 'Generar por Tendencia';
                 break;
             case 'manual':
             default:
                 modeManualBtn.classList.add('active');
-                manualInputContainer.classList.remove('hidden');
+                manualInputContainer.style.display = 'block';
                 generateBtn.textContent = 'Generar Posts con Imagen';
                 break;
         }
@@ -235,40 +250,72 @@ export const initImagePostGenerator = () => {
         const quantity = aiQuantityInput.value;
         const reaction = aiReactionSelect.value;
         const lengthInstruction = getLengthInstruction(currentAiLength);
-        let contents;
+        
         let prompt;
+        let config = {};
+        let contents;
 
         if (currentTitleMode === 'ai-image') {
-            if (!currentBaseImage) {
-                throw new Error('No se ha subido ninguna imagen para analizar.');
+            if (!currentBaseImage) throw new Error('No se ha subido ninguna imagen para analizar.');
+            prompt = `**Rol:** ${copywriterPersona}.
+**Misión:** Convertir la imagen proporcionada en ${quantity} ideas de memes o posts potentes. Cada idea debe ser un título o frase que genere una reacción emocional fuerte y fomente la interacción.
+**Contexto:**
+- Objetivo (Reacción Buscada): Las frases deben generar primordialmente "${reaction}".
+- Longitud Máxima: Cada frase no debe superar las ${lengthInstruction}.
+**Instrucciones:**
+1.  **Análisis Profundo:** Detecta la emoción principal de la imagen, infiere la historia o situación cotidiana que representa, y considera qué público podría sentirse más identificado.
+2.  **Generación de Títulos:** Genera exactamente ${quantity} títulos distintos. Cada uno debe tener un enfoque o ángulo ligeramente diferente.
+**Formato de Salida Obligatorio:** El resultado DEBE ser un objeto JSON válido que siga el esquema proporcionado. No incluyas explicaciones, saludos, ni formato Markdown (\`\`\`json).`;
+            const imagePart = { inlineData: { mimeType: 'image/jpeg', data: currentBaseImage.split(',')[1] } };
+            const textPart = { text: prompt };
+            contents = { parts: [imagePart, textPart] };
+            config = { responseMimeType: "application/json", responseSchema: titlesSchema };
+
+        } else if (currentTitleMode === 'ai-topic') {
+            const topic = aiTopicInput.value.trim();
+            if (!topic) throw new Error('Por favor, introduce un tema principal para la generación de títulos.');
+            prompt = `Actúa como: ${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre: "${topic}".
+**Reglas:**
+- Formato: Cortas, naturales, estilo humano.
+- Longitud Máxima: ${lengthInstruction}.
+- Objetivo: Generar ${reaction}.
+- No incluyas hashtags, números, ni comillas.
+**Formato de Salida Obligatorio:** El resultado DEBE ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
+            contents = prompt;
+            config = { responseMimeType: "application/json", responseSchema: titlesSchema };
+        
+        } else if (currentTitleMode === 'ai-trend') {
+            if (!currentBaseImage) throw new Error('Por favor, sube una imagen base para el modo de tendencia.');
+            const trendTopic = aiTrendTopicInput.value.trim();
+            if (!trendTopic) throw new Error("Por favor, introduce un tema de tendencia para buscar.");
+            
+            const dateFilterValue = aiTrendDateFilter.value;
+            let dateInstruction = '';
+            switch(dateFilterValue) {
+                case 'hour': dateInstruction = ' que ocurrieron en la última hora'; break;
+                case 'today': dateInstruction = ' que ocurrieron hoy (en las últimas 24 horas)'; break;
+                case 'yesterday': dateInstruction = ' que ocurrieron ayer'; break;
+                case 'before_yesterday': dateInstruction = ' que ocurrieron antier'; break;
+                default: dateInstruction = ''; break;
             }
-            prompt = `Actúa como un creador profesional de memes para redes sociales. Observa la siguiente imagen y crea ${quantity} frases que estén totalmente sincronizadas con la expresión, postura, ambiente y posible situación que muestra la imagen.
-El estilo debe ser el de un ${copywriterPersona} y deben parecer frases naturales que la gente compartiría en Facebook o Instagram.
-Cada frase debe ser corta, con máximo ${lengthInstruction}, y el objetivo es que generen ${reaction}.
-No describas la imagen; interpreta lo que podría estar pensando, diciendo o viviendo el personaje.
-El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
+
+            prompt = `**Rol:** ${copywriterPersona}.
+**Misión:** Crear ${quantity} títulos virales que combinen el análisis de una imagen con una tendencia de noticias.
+**Proceso Obligatorio:**
+1.  **Análisis de Imagen:** Primero, analiza la imagen proporcionada. Identifica su emoción principal, el contexto y la situación que representa (ej: frustración, alegría, sorpresa).
+2.  **Investigación de Tendencia:** Luego, realiza una búsqueda en Google sobre noticias y conversaciones recientes sobre "${trendTopic}"${dateInstruction}.
+3.  **Síntesis Creativa:** Combina los hallazgos de la imagen y la búsqueda. Los ${quantity} títulos generados deben tratar sobre la tendencia investigada, pero usando el sentimiento o la situación de la imagen como vehículo para el mensaje. Por ejemplo, si la imagen es de alguien estresado y la tendencia es el lanzamiento de un nuevo teléfono, un buen título sería "Yo, intentando entender si necesito el nuevo teléfono".
+**Reglas Adicionales:**
+- Objetivo (Reacción Buscada): Generar ${reaction}.
+- Longitud Máxima: ${lengthInstruction}.
+- No incluyas hashtags, números, ni comillas.
+**Formato de Salida Obligatorio:** Devuelve un único objeto JSON válido, sin formato Markdown (sin \`\`\`json). El objeto debe tener una sola clave "titles", que es un array de strings. Ejemplo: {"titles": ["título 1", "título 2"]}`;
 
             const imagePart = { inlineData: { mimeType: 'image/jpeg', data: currentBaseImage.split(',')[1] } };
             const textPart = { text: prompt };
             contents = { parts: [imagePart, textPart] };
+            config = { tools: [{ googleSearch: {} }] };
 
-        } else if (currentTitleMode === 'ai-topic') {
-            const topic = aiTopicInput.value.trim();
-            if (!topic) {
-                throw new Error('Por favor, introduce un tema principal para la generación de títulos.');
-            }
-            prompt = `Actúa como un copywriter profesional especializado en crear frases virales para Facebook. Tu misión es crear ${quantity} frases virales para redes sociales sobre el siguiente tema: "${topic}".
-
-Reglas estrictas:
-- Personalidad: ${copywriterPersona}.
-- Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
-- Longitud: Máximo ${lengthInstruction} por frase.
-- Objetivo Principal: Las frases deben generar ${reaction}.
-- No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
-
-El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`;
-            contents = prompt;
-        
         } else {
              throw new Error(`Modo de generación AI no reconocido: ${currentTitleMode}`);
         }
@@ -276,60 +323,87 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: contents,
-            config: { responseMimeType: "application/json", responseSchema: titlesSchema }
+            config: config
         });
         
-        // El schema se encarga de devolver el JSON, así que response.text es el JSON en string
-        const jsonString = response.text.trim();
-        const parsedJson = JSON.parse(jsonString);
+        let jsonString = response.text.trim();
 
-        if (parsedJson.titles && parsedJson.titles.length > 0) {
-            return parsedJson.titles;
-        } else {
-            // Fallback for Gemini 1.0 which might not follow schema perfectly
-             if (typeof parsedJson === 'object' && Array.isArray(parsedJson)) {
+        // Robust parsing for both JSON and non-JSON responses from googleSearch
+        if (jsonString.startsWith('```json')) {
+            jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+        } else if (jsonString.startsWith('```')) {
+            jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+        }
+
+        try {
+            const parsedJson = JSON.parse(jsonString);
+            if (parsedJson.titles && Array.isArray(parsedJson.titles)) {
+                return parsedJson.titles;
+            }
+             if (Array.isArray(parsedJson)) { // Handle cases where AI returns a raw array
                 return parsedJson;
             }
-            throw new Error("La IA no devolvió ningún título válido.");
+        } catch (e) {
+            console.warn("Respuesta de IA no es JSON, intentando fallback:", jsonString);
+            const lines = jsonString.split('\n').map(line => {
+                // Clean up potential markdown list characters or numbering
+                return line.replace(/^[-*]\s*|^\d+\.\s*/, '').trim();
+            }).filter(line => line && !line.includes('{') && !line.includes('}'));
+
+            if (lines.length > 0) return lines;
         }
+
+        throw new Error("La IA no devolvió ningún título en el formato esperado.");
     };
 
-    const generateImages = async (titles) => {
+    const displayPostResults = (titles) => {
         resultsGrid.innerHTML = '';
         resultsHeader.classList.add('hidden');
-        generatedPostCanvases = [];
-        
-        for (const [index, title] of titles.entries()) {
-            previewTitle.textContent = title;
-            try {
-                const canvas = await html2canvas(previewTemplate, { useCORS: true, backgroundColor: '#ffffff' });
-                generatedPostCanvases.push(canvas);
-                
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'download-single-btn';
-                downloadBtn.textContent = 'Descargar';
-                downloadBtn.onclick = () => {
+        if (titles.length === 0) return;
+
+        titles.forEach((title, index) => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item';
+
+            const postClone = previewTemplate.cloneNode(true);
+            postClone.removeAttribute('id');
+
+            const titleElement = postClone.querySelector('.image-post-title');
+            titleElement.textContent = title;
+            
+            // Apply current styles to the clone
+            titleElement.style.fontFamily = previewTitle.style.fontFamily;
+            previewTitle.classList.forEach(cls => {
+                if (cls.startsWith('font-') || cls.startsWith('align-')) {
+                    titleElement.classList.add(cls);
+                }
+            });
+
+            // Make title editable
+            titleElement.addEventListener('click', () => makeEditable(titleElement));
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-single-btn';
+            downloadBtn.textContent = 'Descargar';
+            downloadBtn.onclick = async () => {
+                try {
+                    const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
-                    link.href = img.src;
+                    link.href = canvas.toDataURL('image/png');
                     link.download = `post_imagen_${index + 1}.png`;
                     link.click();
-                };
-                
-                resultItem.appendChild(img);
-                resultItem.appendChild(downloadBtn);
-                resultsGrid.appendChild(resultItem);
-            } catch (error) {
-                console.error(`Error al generar imagen para el título ${index + 1}:`, error);
-            }
-        }
+                } catch (error) {
+                    console.error("Error al generar imagen para el post:", error);
+                    alert("No se pudo generar la imagen del post.");
+                }
+            };
+            
+            resultItem.appendChild(postClone);
+            resultItem.appendChild(downloadBtn);
+            resultsGrid.appendChild(resultItem);
+        });
 
-        if (generatedPostCanvases.length > 0) {
-            resultsHeader.classList.remove('hidden');
-        }
+        resultsHeader.classList.remove('hidden');
     };
 
     const generatePosts = async () => {
@@ -354,8 +428,8 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
                 return;
             }
 
-            toggleLoading(true, `Generando ${titlesToGenerate.length} imágenes...`);
-            await generateImages(titlesToGenerate);
+            toggleLoading(true, `Mostrando ${titlesToGenerate.length} resultados editables...`);
+            displayPostResults(titlesToGenerate);
 
         } catch (error) {
             console.error("Error al generar posts con imagen:", error);
@@ -407,6 +481,7 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
     });
     nameSpan.addEventListener('click', () => makeEditable(nameSpan, saveProfileData));
     usernameSpan.addEventListener('click', () => makeEditable(usernameSpan, saveProfileData));
+    previewTitle.addEventListener('click', () => makeEditable(previewTitle));
     
     // Text controls
     fontSelector.addEventListener('change', updateTitleFont);
@@ -431,6 +506,7 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
     modeManualBtn.addEventListener('click', () => switchTitleMode('manual'));
     modeAiTopicBtn.addEventListener('click', () => switchTitleMode('ai-topic'));
     modeAiImageBtn.addEventListener('click', () => switchTitleMode('ai-image'));
+    modeAiTrendBtn.addEventListener('click', () => switchTitleMode('ai-trend'));
 
     aiLengthSelector.addEventListener('click', (e) => {
         const button = e.target.closest('.mode-btn');
@@ -442,7 +518,14 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
     });
 
     generateBtn.addEventListener('click', generatePosts);
-    downloadAllBtn.addEventListener('click', () => downloadAllAsZip(generatedPostCanvases, 'image-posts'));
+    downloadAllBtn.addEventListener('click', () => {
+        const postElements = resultsGrid.querySelectorAll('.post-template');
+        if (postElements.length > 0) {
+            downloadAllAsZip(Array.from(postElements), 'image-posts');
+        } else {
+            alert('No hay posts generados para descargar.');
+        }
+    });
 
     // --- Init ---
     loadProfileData();
