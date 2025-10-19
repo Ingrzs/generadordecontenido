@@ -1,3 +1,5 @@
+
+
 :root {
     --primary-green: #075E54;
     --light-green: #25D366;
@@ -1041,6 +1043,7 @@ span[contenteditable="true"] {
     font-family: Arial, sans-serif;
     transition: all 0.3s ease;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Added for better visibility in results */
 }
 .post-header {
     display: flex;
@@ -1106,7 +1109,8 @@ span[contenteditable="true"] {
 /* --- Estilos específicos: Post de Solo Texto --- */
 .post-template.facebook {
     width: 400px;
-    height: 400px;
+    height: auto; /* Permitir que la altura se ajuste al contenido */
+    min-height: 200px; /* Establecer una altura mínima razonable */
     display: flex;
     flex-direction: column;
 }
@@ -1123,9 +1127,8 @@ span[contenteditable="true"] {
 }
 .post-text {
     line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    word-break: break-word;
+    white-space: pre-line; /* More robust wrapping */
+    word-wrap: break-word; /* For long words */
     color: var(--text-dark);
 }
 .post-text.align-left { text-align: left; }
@@ -1169,8 +1172,8 @@ span[contenteditable="true"] {
     font-size: 1.1rem;
     line-height: 1.4;
     margin-bottom: 12px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+    white-space: pre-line; /* More robust wrapping */
+    word-wrap: break-word; /* For long words */
     color: var(--text-dark);
 }
 .image-post-title.align-left { text-align: left; }
@@ -1236,17 +1239,26 @@ span[contenteditable="true"] {
     overflow: visible;
     box-shadow: none;
     transition: none;
+    align-items: center; /* Center the post and button */
+}
+.result-item .post-template {
+    width: 400px;
 }
 .result-item:hover {
     transform: none;
     z-index: auto;
     box-shadow: none;
 }
-.result-item img {
-    width: auto;
-    display: block;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-radius: 6px;
+/* Style for the post text inside a result item to indicate it's editable */
+.result-item .post-text,
+.result-item .image-post-title {
+    transition: background-color 0.2s;
+    border-radius: 4px;
+}
+.result-item .post-text:hover,
+.result-item .image-post-title:hover {
+    cursor: text;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 .result-item .download-single-btn {
     position: static;
@@ -2228,8 +2240,7 @@ span[contenteditable="true"] {
         height: auto;
     }
 
-    #results-grid img, #image-post-results-grid img {
+    .result-item .post-template {
         max-width: 100%;
-        height: auto;
     }
 }
