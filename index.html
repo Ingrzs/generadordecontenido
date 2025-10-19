@@ -104,7 +104,7 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <option value="cómico/chistoso" selected>Cómico/Chistoso</option>
                                 <option value="dramático">Dramático</option>
                                 <option value="profesional/corporativo">Profesional/Corporativo</option>
-                                <option value="tierno/cariñose">Tierno/Cariñoso</option>
+                                <option value="tierno/cariñosose">Tierno/Cariñoso</option>
                                 <option value="misterioso/suspenso">Misterioso/Suspenso</option>
                                 <option value="filosófico/profundo">Filosófico/Profundo</option>
                             </select>
@@ -232,7 +232,8 @@ _blank">Obtén tu clave aquí.</a></p>
                         <h3>Modo de Creación</h3>
                         <div class="mode-selector">
                             <button id="mode-manual-btn" class="mode-btn active">Manual</button>
-                            <button id="mode-ai-btn" class="mode-btn">Usar IA</button>
+                            <button id="mode-ai-topic-btn" class="mode-btn">IA (Por Tema)</button>
+                            <button id="mode-ai-trend-btn" class="mode-btn">IA (Tendencia)</button>
                         </div>
                         <div id="manual-input-container">
                              <div class="form-group">
@@ -241,9 +242,21 @@ _blank">Obtén tu clave aquí.</a></p>
                             </div>
                         </div>
                         <div id="ai-input-container" class="hidden">
-                            <div class="form-group">
+                            <div class="form-group" id="ai-topic-group">
                                 <label for="ai-topic">Tema Principal</label>
-                                <input type="text" id="ai-topic" placeholder="Ej: El desamor, la vida en la oficina">
+                                <input type="text" id="ai-topic" placeholder="Ej: El desamor (o déjalo vacío para temas aleatorios)">
+                            </div>
+                            <div class="form-group hidden" id="ai-trend-group">
+                                <label for="ai-trend-topic">Buscar Tendencia</label>
+                                <input type="text" id="ai-trend-topic" placeholder="Ej: Estreno de nueva película, Evento deportivo, etc.">
+                                <label for="ai-trend-date-filter" style="margin-top: 10px;">Periodo de Búsqueda</label>
+                                <select id="ai-trend-date-filter">
+                                    <option value="any">Cualquier Fecha</option>
+                                    <option value="hour">Última Hora</option>
+                                    <option value="today">Hoy (últimas 24h)</option>
+                                    <option value="yesterday">Ayer</option>
+                                    <option value="before_yesterday">Antier</option>
+                                </select>
                             </div>
                              <div class="form-group">
                                 <label for="ai-tone">Tono</label>
@@ -399,6 +412,7 @@ _blank">Obtén tu clave aquí.</a></p>
                              <button id="image-post-mode-manual-btn" class="mode-btn active">Manual</button>
                              <button id="image-post-mode-ai-topic-btn" class="mode-btn">IA (por tema)</button>
                              <button id="image-post-mode-ai-image-btn" class="mode-btn" disabled>IA (Analizar Imagen)</button>
+                             <button id="image-post-mode-ai-trend-btn" class="mode-btn" disabled>IA (Tendencia)</button>
                          </div>
                          <div id="image-post-manual-input-container">
                              <div class="form-group">
@@ -410,6 +424,18 @@ _blank">Obtén tu clave aquí.</a></p>
                             <div class="form-group" id="image-post-ai-topic-group">
                                 <label for="image-post-ai-topic">Tema Principal</label>
                                 <input type="text" id="image-post-ai-topic" placeholder="Ej: Frases motivacionales para el lunes">
+                            </div>
+                             <div class="form-group hidden" id="image-post-ai-trend-group">
+                                <label for="image-post-ai-trend-topic">Buscar Tendencia</label>
+                                <input type="text" id="image-post-ai-trend-topic" placeholder="Ej: Estreno de nueva película, Evento deportivo, etc.">
+                                <label for="image-post-ai-trend-date-filter" style="margin-top: 10px;">Periodo de Búsqueda</label>
+                                <select id="image-post-ai-trend-date-filter">
+                                    <option value="any">Cualquier Fecha</option>
+                                    <option value="hour">Última Hora</option>
+                                    <option value="today">Hoy (últimas 24h)</option>
+                                    <option value="yesterday">Ayer</option>
+                                    <option value="before_yesterday">Antier</option>
+                                </select>
                             </div>
                              <div class="form-group">
                                 <label for="image-post-ai-tone">Tono</label>
