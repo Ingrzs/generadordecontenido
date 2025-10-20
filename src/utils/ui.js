@@ -1,12 +1,10 @@
-
-
-
 const tabViewMap = {
     'chat': 'chat-generator-view',
     'post': 'post-generator-view',
     'image-post': 'image-post-generator-view',
     'facebook-post': 'facebook-post-generator-view',
     'text-enhancer': 'text-enhancer-view',
+    'stories': 'stories-generator-view',
     'meme': 'meme-generator-view',
     'graphic-post': 'graphic-post-generator-view'
 };
