@@ -30,6 +30,7 @@
                 <button id="tab-image-post-generator" class="tab-btn" data-tab="image-post">Generador Posts con Imagen</button>
                 <button id="tab-facebook-post-generator" class="tab-btn" data-tab="facebook-post">Generador Post Facebook</button>
                 <button id="tab-text-enhancer" class="tab-btn" data-tab="text-enhancer">Mejorador de Texto</button>
+                <button id="tab-stories" class="tab-btn" data-tab="stories">Historias</button>
                 <button id="tab-meme-generator" class="tab-btn" data-tab="meme">Meme / Cómic</button>
                 <button id="tab-graphic-post-generator" class="tab-btn" data-tab="graphic-post">Post Gráfico</button>
             </div>
@@ -258,8 +259,19 @@ _blank">Obtén tu clave aquí.</a></p>
                                     <option value="before_yesterday">Antier</option>
                                 </select>
                             </div>
+                            <h3>Tipo de Contenido</h3>
+                            <div class="form-group">
+                                <select id="post-content-type-selector">
+                                    <option value="meme" selected>Meme</option>
+                                    <option value="frase_opinion">Frase / Opinión</option>
+                                    <option value="debate">Debate</option>
+                                    <option value="emocional">Frase Emocional</option>
+                                    <option value="reflexion">Reflexión Nocturna</option>
+                                    <option value="final">Frase Final</option>
+                                </select>
+                            </div>
                              <div class="form-group">
-                                <label for="ai-tone">Tono</label>
+                                <label for="ai-tone">Tono (Modificador)</label>
                                 <select id="ai-tone">
                                      <optgroup label="🔥 TONOS COMBINADOS (Top 10)">
                                         <option value="sarcastic_humorous" selected>😏 Sarcástico + Humorístico</option>
@@ -437,8 +449,19 @@ _blank">Obtén tu clave aquí.</a></p>
                                     <option value="before_yesterday">Antier</option>
                                 </select>
                             </div>
+                            <h3>Tipo de Contenido</h3>
+                            <div class="form-group">
+                                <select id="image-post-content-type-selector">
+                                    <option value="meme" selected>Meme</option>
+                                    <option value="frase_opinion">Frase / Opinión</option>
+                                    <option value="debate">Debate</option>
+                                    <option value="emocional">Frase Emocional</option>
+                                    <option value="reflexion">Reflexión Nocturna</option>
+                                    <option value="final">Frase Final</option>
+                                </select>
+                            </div>
                              <div class="form-group">
-                                <label for="image-post-ai-tone">Tono</label>
+                                <label for="image-post-ai-tone">Tono (Modificador)</label>
                                 <select id="image-post-ai-tone">
                                      <optgroup label="🔥 TONOS COMBINADOS (Top 10)">
                                         <option value="sarcastic_humorous" selected>😏 Sarcástico + Humorístico</option>
@@ -713,6 +736,108 @@ _blank">Obtén tu clave aquí.</a></p>
                          <div id="te-loader" class="hidden">
                             <div class="spinner"></div>
                             <p>Mejorando texto...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista del Generador de Historias -->
+            <div id="stories-generator-view" class="hidden">
+                <div class="st-layout">
+                    <div class="st-controls">
+                        <div class="st-form-group">
+                            <label for="st-topic">Tema de la Historia (o dejar en blanco)</label>
+                            <input type="text" id="st-topic" placeholder="Ej: Mi peor primera cita, El día que adopté a mi perro...">
+                        </div>
+                        <div class="st-form-group">
+                            <label>Modo de Creación</label>
+                            <div id="st-mode-selector" class="st-segmented-control">
+                                <button data-mode="inventada">Inventada</button>
+                                <button data-mode="chisme" class="active">Confesión / Chisme</button>
+                                <button data-mode="web">Basada en Web</button>
+                            </div>
+                        </div>
+                        <div id="st-date-filter-group" class="st-form-group hidden">
+                            <label for="st-date-filter">Periodo de Búsqueda (para Tendencias)</label>
+                            <select id="st-date-filter">
+                                <option value="any">Cualquier Fecha</option>
+                                <option value="hour">Última Hora</option>
+                                <option value="today">Hoy (últimas 24h)</option>
+                                <option value="yesterday">Ayer</option>
+                                <option value="before_yesterday">Antier</option>
+                            </select>
+                        </div>
+                        <div class="st-form-group">
+                            <label for="st-tone-select">Tono de la Narrativa</label>
+                            <select id="st-tone-select">
+                               <optgroup label="🔥 TONOS COMBINADOS (Top 10)">
+                                    <option value="sarcastic_humorous">😏 Sarcástico + Humorístico</option>
+                                    <option value="polemic_opinative">💣 Polémico + Opinativo</option>
+                                    <option value="ironic_critical">🫣 Irónico + Crítico</option>
+                                    <option value="emotional_reflective" selected>💔 Emocional + Reflexivo</option>
+                                    <option value="curious_emotional">😮 Curioso + Emocional</option>
+                                    <option value="inspiring_critical">💅 Inspirador + Crítico</option>
+                                    <option value="sarcastic_polemic">🤨 Sarcástico + Polémico</option>
+                                    <option value="double_meaning_humor">😏 Doble sentido + Humor</option>
+                                    <option value="curious_polemic">🧠 Curioso + Polémico</option>
+                                    <option value="dramatic_emotional">💔 Dramático + Emocional</option>
+                                </optgroup>
+                                <optgroup label="🧠 TONOS PUROS (Individuales)">
+                                    <option value="pure_sarcastic">🧠 Sarcástico</option>
+                                    <option value="pure_polemic">💣 Polémico</option>
+                                    <option value="pure_humorous">😜 Humorístico</option>
+                                    <option value="pure_ironic">🤨 Irónico</option>
+                                    <option value="pure_curious">🧪 Curioso</option>
+                                    <option value="pure_emotional">💔 Emocional</option>
+                                    <option value="pure_critical">🧨 Crítico</option>
+                                    <option value="pure_motivational">✨ Motivacional</option>
+                                    <option value="pure_double_meaning">🫣 Doble sentido</option>
+                                    <option value="pure_dramatic">🎭 Dramático</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="st-form-group">
+                            <label for="st-reaction-select">Objetivo (Reacción Buscada)</label>
+                            <select id="st-reaction-select">
+                                <option value="generar empatía y ser compartida" selected>Empatía y Viralidad (que se comparta)</option>
+                                <option value="provocar debate y comentarios">Debate y Comentarios</option>
+                                <option value="inspirar y motivar a la acción">Inspiración y Motivación</option>
+                                <option value="crear suspense y curiosidad">Suspense y Curiosidad</option>
+                                <option value="hacer reír y entretener">Risa y Entretenimiento</option>
+                                <option value="provocar una reflexión profunda">Reflexión Profunda</option>
+                            </select>
+                        </div>
+                        <div class="st-form-group">
+                            <label>Longitud de la Historia</label>
+                            <div id="st-length-selector" class="st-segmented-control">
+                                <button data-length="corta">Corta</button>
+                                <button data-length="media" class="active">Media</button>
+                                <button data-length="larga">Larga</button>
+                            </div>
+                        </div>
+                        <button id="st-generate-btn">Generar Historia</button>
+                    </div>
+                    <div class="st-results-area">
+                         <div id="st-initial-state">
+                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" fill="currentColor"/></svg>
+                             <h2>Tu Fábrica de Relatos</h2>
+                            <p>Escribe un tema y la IA creará una historia anónima. Elige "Inventada" para una creación original o "Basada en Web" para un relato inspirado en hechos reales.</p>
+                         </div>
+                        <div id="st-results-container" class="hidden">
+                            <div class="st-card">
+                                <div class="st-card-header">
+                                    <h3>Historia Generada</h3>
+                                    <button id="st-copy-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        Copiar
+                                    </button>
+                                </div>
+                                <p id="st-generated-text"></p>
+                            </div>
+                        </div>
+                         <div id="st-loader" class="hidden">
+                            <div class="spinner"></div>
+                            <p>Escribiendo historia...</p>
                         </div>
                     </div>
                 </div>
