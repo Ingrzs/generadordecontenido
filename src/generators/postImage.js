@@ -143,6 +143,14 @@ export const initImagePostGenerator = () => {
             case 'reflexion':
             case 'final':
                 return `Actúa como un experto en psicología emocional y storytelling persuasivo. ${baseInstruction}`;
+            case 'mananera':
+                return `Actúa como un experto en copywriting emocional, neuromarketing y creación de frases virales. ${baseInstruction}`;
+            case 'cristiana':
+                return `Actúa como un creador cristiano experto en reflexiones virales y copywriting espiritual. ${baseInstruction}`;
+            case 'debatible':
+                return `Actúa como un experto en engagement y neuromarketing emocional. ${baseInstruction}`;
+            case 'manipuladora':
+                return `Actúa como experto en psicología emocional y neuromarketing sugestivo. ${baseInstruction}`;
             case 'meme':
             default:
                 // For 'meme', the persona is defined by the more specific tone selector
