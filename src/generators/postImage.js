@@ -1,4 +1,3 @@
-
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { createWatermarkManager } from "../utils/watermark.js";
@@ -53,6 +52,7 @@ export const initImagePostGenerator = () => {
     const aiTrendGroup = document.getElementById('image-post-ai-trend-group');
     const aiTrendTopicInput = document.getElementById('image-post-ai-trend-topic');
     const aiTrendDateFilter = document.getElementById('image-post-ai-trend-date-filter');
+    const contentTypeSelector = document.getElementById('image-post-content-type-selector');
     const aiToneSelect = document.getElementById('image-post-ai-tone');
     const aiReactionSelect = document.getElementById('image-post-ai-reaction');
     const aiLengthSelector = document.getElementById('image-post-ai-length-selector');
@@ -130,6 +130,24 @@ export const initImagePostGenerator = () => {
             'pure_dramatic': 'Adopta un tono puramente dramático. Tu objetivo es impactar emocionalmente. Usa un lenguaje intenso, profundo y con carga sentimental para describir una situación.' + baseInstruction
         };
         return toneMap[toneKey] || 'Actúa como un copywriter experto en redes sociales. Escribe en un tono neutro e informativo.' + baseInstruction;
+    };
+
+    const getPersonaInstruction = (contentType) => {
+        const baseInstruction = "Usa siempre un lenguaje natural, coloquial y fácil de entender, como el español que se habla en México. Evita palabras demasiado formales o rebuscadas.";
+        switch (contentType) {
+            case 'frase_opinion':
+                return `Actúa como un copywriter persuasivo. ${baseInstruction}`;
+            case 'debate':
+                return `Actúa como un estratega en interacción y engagement. ${baseInstruction}`;
+            case 'emocional':
+            case 'reflexion':
+            case 'final':
+                return `Actúa como un experto en psicología emocional y storytelling persuasivo. ${baseInstruction}`;
+            case 'meme':
+            default:
+                // For 'meme', the persona is defined by the more specific tone selector
+                return getToneInstruction(aiToneSelect.value);
+        }
     };
 
     const getLengthInstruction = (lengthKey) => {
@@ -244,9 +262,10 @@ export const initImagePostGenerator = () => {
     const generateTitlesWithAI = async () => {
         const ai = getAiInstance();
         if (!ai) throw new Error('Por favor, introduce tu clave API para usar la generación con IA.');
-
-        const toneKey = aiToneSelect.value;
-        const copywriterPersona = getToneInstruction(toneKey);
+        
+        const contentType = contentTypeSelector.value;
+        const personaInstruction = getPersonaInstruction(contentType);
+        const toneDescription = aiToneSelect.options[aiToneSelect.selectedIndex].text;
         const quantity = aiQuantityInput.value;
         const reaction = aiReactionSelect.value;
         const lengthInstruction = getLengthInstruction(currentAiLength);
@@ -255,10 +274,19 @@ export const initImagePostGenerator = () => {
         let config = {};
         let contents;
 
+        // Construct base prompt based on persona
+        let basePrompt;
+        if (contentType === 'meme') {
+            basePrompt = `**Rol:** ${personaInstruction}`;
+        } else {
+            basePrompt = `**Rol:** ${personaInstruction}\n**Tono Adicional (Modificador):** "${toneDescription}"`;
+        }
+
+
         if (currentTitleMode === 'ai-image') {
             if (!currentBaseImage) throw new Error('No se ha subido ninguna imagen para analizar.');
-            prompt = `**Rol:** ${copywriterPersona}.
-**Misión:** Convertir la imagen proporcionada en ${quantity} ideas de memes o posts potentes. Cada idea debe ser un título o frase que genere una reacción emocional fuerte y fomente la interacción.
+            prompt = `${basePrompt}
+**Misión:** Convertir la imagen proporcionada en ${quantity} ideas de posts potentes. Cada idea debe ser un título o frase que genere una reacción emocional fuerte y fomente la interacción.
 **Contexto:**
 - Objetivo (Reacción Buscada): Las frases deben generar primordialmente "${reaction}".
 - Longitud Máxima: Cada frase no debe superar las ${lengthInstruction}.
@@ -274,7 +302,15 @@ export const initImagePostGenerator = () => {
         } else if (currentTitleMode === 'ai-topic') {
             const topic = aiTopicInput.value.trim();
             if (!topic) throw new Error('Por favor, introduce un tema principal para la generación de títulos.');
-            prompt = `Actúa como: ${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre: "${topic}".
+            
+            let topicPrompt;
+             if (contentType === 'meme') {
+                topicPrompt = `${personaInstruction}. Tu misión es crear ${quantity} frases virales para redes sociales sobre: "${topic}".`;
+            } else {
+                topicPrompt = `Tu rol es: ${personaInstruction}. Tu misión es crear ${quantity} frases virales para redes sociales sobre: "${topic}". Adicionalmente, aplica el siguiente tono/enfoque específico: "${toneDescription}".`;
+            }
+
+            prompt = `${topicPrompt}
 **Reglas:**
 - Formato: Cortas, naturales, estilo humano.
 - Longitud Máxima: ${lengthInstruction}.
@@ -299,7 +335,7 @@ export const initImagePostGenerator = () => {
                 default: dateInstruction = ''; break;
             }
 
-            prompt = `**Rol:** ${copywriterPersona}.
+            prompt = `${basePrompt}
 **Misión:** Crear ${quantity} títulos virales que combinen el análisis de una imagen con una tendencia de noticias.
 **Proceso Obligatorio:**
 1.  **Análisis de Imagen:** Primero, analiza la imagen proporcionada. Identifica su emoción principal, el contexto y la situación que representa (ej: frustración, alegría, sorpresa).
