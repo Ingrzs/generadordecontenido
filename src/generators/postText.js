@@ -38,6 +38,7 @@ export const initPostTextGenerator = () => {
     const aiTrendGroup = document.getElementById('ai-trend-group');
     const aiTrendTopicInput = document.getElementById('ai-trend-topic');
     const aiTrendDateFilter = document.getElementById('ai-trend-date-filter');
+    const contentTypeSelector = document.getElementById('post-content-type-selector');
     const aiToneSelect = document.getElementById('ai-tone');
     const aiReactionSelect = document.getElementById('ai-reaction');
     const aiLengthSelector = document.getElementById('ai-length-selector');
@@ -196,6 +197,24 @@ export const initPostTextGenerator = () => {
         return toneMap[toneKey] || 'Actúa como un copywriter experto en redes sociales. Escribe en un tono neutro e informativo.' + baseInstruction;
     };
 
+    const getPersonaInstruction = (contentType) => {
+        const baseInstruction = "Usa siempre un lenguaje natural, coloquial y fácil de entender, como el español que se habla en México. Evita palabras demasiado formales o rebuscadas.";
+        switch (contentType) {
+            case 'frase_opinion':
+                return `Actúa como un copywriter persuasivo. ${baseInstruction}`;
+            case 'debate':
+                return `Actúa como un estratega en interacción y engagement. ${baseInstruction}`;
+            case 'emocional':
+            case 'reflexion':
+            case 'final':
+                return `Actúa como un experto en psicología emocional y storytelling persuasivo. ${baseInstruction}`;
+            case 'meme':
+            default:
+                // For 'meme', the persona is defined by the more specific tone selector
+                return getToneInstruction(aiToneSelect.value);
+        }
+    };
+
     const getLengthInstruction = (lengthKey) => {
         const lengthMap = {
             'muy corto': '12 palabras',
@@ -211,19 +230,29 @@ export const initPostTextGenerator = () => {
             throw new Error('Por favor, introduce tu clave API para usar la generación con IA.');
         }
 
-        const toneKey = aiToneSelect.value;
+        const contentType = contentTypeSelector.value;
+        const personaInstruction = getPersonaInstruction(contentType);
         const reaction = aiReactionSelect.value;
-        const copywriterPersona = getToneInstruction(toneKey);
         const lengthInstruction = getLengthInstruction(currentAiLength);
         const quantity = aiQuantityInput.value;
+        const toneDescription = aiToneSelect.options[aiToneSelect.selectedIndex].text;
 
         let prompt;
         let config;
+        
+        // Construct the prompt based on persona and tone
+        let basePrompt;
+        if (contentType === 'meme') {
+             basePrompt = `${personaInstruction}. Tu misión es crear ${quantity} frases virales para redes sociales.`;
+        } else {
+            basePrompt = `Tu rol es: ${personaInstruction}. Tu misión es crear ${quantity} frases virales para redes sociales. Adicionalmente, aplica el siguiente tono/enfoque específico: "${toneDescription}".`;
+        }
+
 
         if (currentPostGenMode === 'ai-topic') {
             const topic = aiTopicInput.value.trim();
             prompt = topic
-                ? `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales sobre el siguiente tema: "${topic}".
+                ? `${basePrompt} El tema principal es: "${topic}".
 
 Reglas estrictas:
 - Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
@@ -232,10 +261,10 @@ Reglas estrictas:
 - No incluyas hashtags, números de lista, ni comillas alrededor de cada frase.
 
 El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin explicaciones adicionales.`
-                : `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales, cada una sobre un tema completamente diferente y sin relación con las otras.
+                : `${basePrompt} Cada frase debe ser sobre un tema completamente diferente y sin relación con las otras.
 
 Reglas estrictas:
-- Temas: Debes inventar los temas para cada frase. Asegúrate de que haya una gran diversidad. Por ejemplo, una frase puede ser sobre el desamor, otra sobre el trabajo, otra sobre una situación cómica del día a día, otra sobre motivación, etc. La clave es la máxima variedad posible entre las frases.
+- Temas: Debes inventar los temas para cada frase. Asegúrate de que haya una gran diversidad. Por ejemplo, una frase puede ser sobre el desamor, otra sobre el trabajo, otra sobre una situación cómica del día a día, etc. La clave es la máxima variedad posible entre las frases.
 - Formato: Las frases deben ser cortas, naturales, con estilo humano, como las que se usan en imágenes o memes.
 - Longitud: Máximo ${lengthInstruction} por frase.
 - Objetivo Principal: Las frases deben generar ${reaction}.
@@ -284,7 +313,7 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
                     break;
             }
 
-            prompt = `${copywriterPersona}. Tu misión es crear ${quantity} frases virales para redes sociales.
+            prompt = `${basePrompt}
 
 Paso 1: Investigación.
 Primero, realiza una búsqueda en Google sobre las últimas noticias, conversaciones y tendencias relacionadas con el siguiente tema: "${trendTopic}"${dateInstruction}.
