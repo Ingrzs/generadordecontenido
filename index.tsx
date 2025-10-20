@@ -5,6 +5,7 @@ import { initPostTextGenerator } from './src/generators/postText.js';
 import { initImagePostGenerator } from './src/generators/postImage.js';
 import { initFacebookPostGenerator } from './src/generators/postFacebook.js';
 import { initTextEnhancer } from './src/generators/textEnhancer.js';
+import { initStoriesGenerator } from './src/generators/stories.js';
 import { initMemeGenerator } from './src/generators/meme.js';
 import { initGraphicPostGenerator } from './src/generators/graphicPost.js';
 
@@ -32,6 +33,7 @@ const App = () => {
     initImagePostGenerator();
     initFacebookPostGenerator();
     initTextEnhancer();
+    initStoriesGenerator();
     initMemeGenerator();
     initGraphicPostGenerator();
 
