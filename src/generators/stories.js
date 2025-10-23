@@ -4,6 +4,8 @@ export const initStoriesGenerator = () => {
     // --- Elements ---
     const topicInput = document.getElementById('st-topic');
     const modeSelector = document.getElementById('st-mode-selector');
+    const structureGroup = document.getElementById('st-structure-group');
+    const structureSelector = document.getElementById('st-structure-selector');
     const dateFilterGroup = document.getElementById('st-date-filter-group');
     const dateFilterSelect = document.getElementById('st-date-filter');
     const toneSelect = document.getElementById('st-tone-select');
@@ -15,10 +17,16 @@ export const initStoriesGenerator = () => {
     const loader = document.getElementById('st-loader');
     const generatedTextEl = document.getElementById('st-generated-text');
     const copyBtn = document.getElementById('st-copy-btn');
+    const sourcesCard = document.querySelector('.st-sources-card');
+    const sourcesListEl = document.getElementById('st-sources-list');
+
 
     // --- State ---
-    let currentMode = 'chisme'; // Default to the new mode
+    let currentMode = 'chisme';
+    let currentStructure = 'dilema_consejo';
     let currentLength = 'media';
+    let lastGeneratedStory = ''; // To request a different story on the same topic
+    let lastTopic = ''; // To track the last used topic
 
     // --- Functions ---
     const getToneInstruction = (toneKey) => {
@@ -71,10 +79,11 @@ export const initStoriesGenerator = () => {
         toggleLoading(true);
         initialState.style.display = 'none';
         resultsContainer.classList.add('hidden');
+        sourcesCard.classList.add('hidden');
+
 
         let finalPrompt;
         let config = {};
-        const reaction = reactionSelect.options[reactionSelect.selectedIndex].text; // Get the visible text for clarity
         const reactionValue = reactionSelect.value;
         const tone = getToneInstruction(toneSelect.value);
         const length = getLengthInstruction(currentLength);
@@ -85,49 +94,50 @@ export const initStoriesGenerator = () => {
                 ? `La confesión debe girar en torno al siguiente tema: "${topic}".`
                 : "Si no se proporciona un tema, inventa uno relacionado con situaciones cotidianas y relaciones personales (familia, amigos, pareja, trabajo).";
 
-             let structureInstruction;
-            if (reactionValue.includes('empatía') || reactionValue.includes('reflexión')) {
-                structureInstruction = "Crea una historia de **Dilema/Desahogo** como los ejemplos de referencia. Debe ser un relato personal detallado sobre una situación difícil, terminando con una reflexión emocional, una sensación de estar atrapado o simplemente como un desahogo para ventilar una situación.";
-            } else if (reactionValue.includes('debate') || reactionValue.includes('comentarios')) {
-                structureInstruction = "Crea una historia de **\"Qué Hago\"** como el ejemplo de la jefa. Debe presentar un dilema moral o social y terminar con una pregunta directa a la audiencia.";
-            } else { // Risa, suspense, etc.
-                structureInstruction = "Crea una historia con un **Giro Inesperado** como el ejemplo de los hermanos. Debe tener un final sorprendente, gracioso o impactante.";
+            let structureInstruction;
+            switch (currentStructure) {
+                case 'dilema_consejo':
+                    structureInstruction = "debes generar una historia con la estructura de **Dilema / Pide Consejo**. Presenta un problema personal o de relación de forma clara, describe el conflicto o la duda que genera, y finaliza con una pregunta directa a la audiencia buscando consejo, validación o diferentes puntos de vista (ej: ¿Qué hago?, ¿Estoy exagerando?, ¿Les ha pasado?).";
+                    break;
+                case 'chisme_anecdota':
+                    structureInstruction = "debes generar una historia con la estructura de **Chisme / Anécdota**. La narrativa debe tener un giro final inesperado, sorprendente, gracioso o impactante que sea el punto central del relato.";
+                    break;
+                case 'desahogo':
+                    structureInstruction = "debes generar una historia con la estructura de **Desahogo Personal**. El relato debe centrarse en expresar un sentimiento profundo, una frustración o una experiencia personal significativa, con el objetivo de ventilar la emoción, sin necesariamente buscar un consejo o tener un giro final.";
+                    break;
+                default:
+                    structureInstruction = "debes generar una historia con la estructura de **Dilema / Pide Consejo**.";
             }
 
-            finalPrompt = `Actúa como un experto en crear contenido viral de "chismes" y "confesiones anónimas" para redes sociales. Tu misión es escribir una historia ${length} en formato de confesión, inspirándote en los siguientes ejemplos para capturar el tono y la estructura perfectos.
+            finalPrompt = `Actúa como un experto en crear contenido viral de "chismes" y "confesiones anónimas" para redes sociales. Tu misión es escribir una historia ${length} en formato de confesión anónima.
 
-**EJEMPLOS DE REFERENCIA (NO COPIAR, SOLO APRENDER EL ESTILO):**
+**REGLA DE TONO FUNDAMENTAL:**
+Cuando la historia trate temas delicados o conflictos (infidelidades, menosprecios, problemas familiares), describe la situación y los sentimientos de forma clara y directa, pero siempre con un lenguaje respetuoso y apto para todo público. Transforma lenguaje ofensivo en la descripción de la *acción* o el *sentimiento*, sin usar palabras explícitas.
 
-*   **Ejemplo 1 - Giro Inesperado (Objetivo: Risa/Sorpresa):**
-    > 🚨Confesión Anónima 🚨
-    > Haz de cuenta que somos 5 hermanos y un día que nos juntamos una de mis hermanas le reviso el celular a mi papá... encontró mensajes muy fuertes con otra mujer... Fuimos a decirle a mi mamá enfrente de mi papa para que no lo negara... y resulta que esos mensajes eran de mi mamá, ellos tenían esas dinámicas para poner picor en su relación... todos los hermanos quedamos espantados y se nos quitaron las ganas de ser chismosos jajaja
+**EJEMPLOS DE REFERENCIA (APRENDE EL ESTILO DE CADA ESTRUCTURA):**
 
-*   **Ejemplo 2 - Dilema/Desahogo (Objetivo: Empatía/Reflexión):**
-    > Anónimo por favor!
-    > Resulta que tenía años viendo cosas que me hacían dudar de mi esposo, pero estaba sumergida en preocupaciones y tristeza por mi hijo que tiene autismo... me enteré de que andaba coqueteando con una compañera de su trabajo... Estoy en una situación muy difícil porque... mi hijo ya ha pasado por 5 escuelas y en la que esta ahora se ha adaptado mejor... A veces es muy obvio lo que se tiene que hacer pero cuando uno se encuentra inmerso en la situación todo se siente más pesado 😥
+*   **Ejemplo Estructura 1 - Dilema / Pide Consejo (Busca interacción y debate):**
+    > Anónimo por favor. Mi esposo se molesta cuando le pido que cuide de los niños, dice que es únicamente mi responsabilidad. No sé cómo hacerlo cambiar de opinión. Dice no tener tiempo para ellos, pero cuando descansa sale con sus amigos a beber y me deja sola. Me estoy comenzando a hartar. ¿Qué harían en mi lugar?
 
-*   **Ejemplo 3 - Desahogo Personal (Objetivo: Empatía/Desahogo):**
-    > 🚨Confesión Anónima🚨
-    > Hace un tiempo mi ex me termino, fue muy fría la manera en que lo hizo... esa última vez que lo vi fue hace un tiempesito, recuerdo haberme quedado sola en esa banca llorando mientras el se iba... El ya me había sido infiel en 2 ocasiones pero yo por amor siempre lo perdone... Ahora, una de las últimas citas que tuve con el... me di cuenta que tenia piojitos, yo por amor no le di importancia... pero, cuando me termino... recordé lo de los piojitos y pues en ese momento estaba una con el corazón rotó en recuperación y piojosa 😭. Espero el no lea esto jaja, y si lo lee lo siento, necesitaba desahogarme 😮‍💨
+*   **Ejemplo Estructura 2 - Chisme / Anécdota (Busca sorpresa, risa o impacto):**
+    > 🚨Confesión Anónima🚨 Haz de cuenta que somos 5 hermanos y un día que nos juntamos, una de mis hermanas le revisó el celular a mi papá... encontró mensajes muy fuertes con otra mujer... Fuimos a decirle a mi mamá enfrente de mi papá para que no lo negara... y resulta que esos mensajes eran de mi mamá, ellos tenían esas dinámicas para ponerle picor a su relación... todos los hermanos quedamos espantados y se nos quitaron las ganas de ser chismosos jajaja
 
-*   **Ejemplo 4 - "Qué Hago" (Objetivo: Debate/Comentarios):**
-    > 🚨Confesión Anónima🚨
-    > La hermana de mi jefa le anda agarrando dinero de la caja del negocio, me di cuenta por pura casualidad porque la vi. No he querido decir nada porque la jefa siempre dice que su hermana es su mano derecha... pero la neta anda de uña. Creen que vale la pena decir algo, o le sigo el rollo?
+*   **Ejemplo Estructura 3 - Desahogo Personal (Busca empatía y ser compartido):**
+    > Mi ex pareja me terminó sin razón aparente, y a la semana ya andaba con otra persona. Lo que más me dolió es que esa persona salió embarazada mientras aún nos veíamos. Todavía me duele mucho y no sé cómo superarlo del todo. Solo necesitaba contarlo.
 
 **TU TAREA AHORA:**
-Crea una confesión COMPLETAMENTE NUEVA Y ORIGINAL siguiendo los parámetros y reglas a continuación.
+Crea una confesión COMPLETAMENTE NUEVA Y ORIGINAL que siga los parámetros y reglas a continuación.
 
 **Parámetros de Contenido:**
 - **Tema:** ${topicInstruction}
 - **Tono:** La narrativa debe tener ${tone}.
-- **Objetivo y Estructura:** El objetivo principal es "${reaction}". Para lograrlo, ${structureInstruction}
+- **Objetivo y Estructura:** El objetivo principal es "${reactionValue}". Para lograrlo, ${structureInstruction}
 - **Longitud:** La historia debe ser ${length}.
 
 **Reglas de Formato y Estilo (OBLIGATORIAS):**
-1.  **Encabezado:** Varía el inicio. Puedes usar "🚨Confesión Anónima 🚨", "Anónimo por favor!" o empezar directamente la historia sin ningún encabezado para que se sienta más natural.
+1.  **Encabezado:** Puedes usar "🚨Confesión Anónima 🚨", "Anónimo por favor!" o empezar directamente la historia sin ningún encabezado para que se sienta más natural.
 2.  **Lenguaje:** Usa un lenguaje 100% conversacional, coloquial y natural, como si alguien le estuviera contando un chisme a un amigo. Utiliza el español que se habla comúnmente en México. Evita a toda costa un vocabulario formal o rebuscado.
 3.  **Emojis:** Usa emojis de forma sutil y natural para acentuar emociones, como en los ejemplos.
-4.  **Detalles Personales:** Incluye detalles pequeños, específicos y a veces un poco vergonzosos (como lo de los 'piojitos' en el ejemplo). Estos detalles hacen que la historia se sienta mucho más real y auténtica.
 
 El resultado final debe ser únicamente el texto de la historia, sin explicaciones adicionales.`;
 
@@ -141,7 +151,7 @@ Crea una historia ${length} y viral con estructura narrativa (inicio impactante,
 
 ${nicheInstruction}
 El tono de la historia será ${tone},
-y su objetivo será ${reactionSelect.value}.
+y su objetivo será ${reactionValue}.
 
 **Instrucciones de Lenguaje y Estilo (MUY IMPORTANTE):**
 - Tu español debe ser 100% natural, coloquial y fácil de entender, específicamente como el que se habla comúnmente en México.
@@ -152,13 +162,23 @@ y su objetivo será ${reactionSelect.value}.
 El resultado debe ser únicamente el texto de la historia, sin títulos, explicaciones, ni saludos.`;
 
         } else { // web mode
-            if (!topic) {
-                alert('Por favor, introduce un tema para la historia en modo "Basada en Web".');
-                toggleLoading(false);
-                initialState.style.display = 'flex';
-                return;
+            let topicInstruction;
+            if (topic) {
+                topicInstruction = `sobre el tema: "${topic}"`;
+            } else {
+                topicInstruction = `sobre un tema aleatorio que elijas. Puede ser una celebridad, un evento histórico, un lugar famoso, o una anécdota científica interesante. ¡Sorpréndeme!`;
             }
-            
+
+            let varietyInstruction = '';
+            if (topic && topic.toLowerCase() === lastTopic.toLowerCase() && lastGeneratedStory) {
+                varietyInstruction = `
+IMPORTANTE: Ya me contaste una historia sobre este tema. Ahora, busca y cuéntame una anécdota o un dato COMPLETAMENTE DIFERENTE. No repitas la siguiente historia:
+---
+${lastGeneratedStory}
+---
+`;
+            }
+
             const dateFilterValue = dateFilterSelect.value;
             let dateInstruction = '';
             switch(dateFilterValue) {
@@ -169,46 +189,75 @@ El resultado debe ser únicamente el texto de la historia, sin títulos, explica
                 case 'any': default: dateInstruction = ''; break;
             }
 
-            finalPrompt = `Actúa como un creador de contenido experto en curiosidades y datos interesantes para redes sociales. Tu especialidad es encontrar información en la web y transformarla en posts virales, entretenidos y fáciles de leer. Debes replicar el estilo de los siguientes ejemplos.
+            finalPrompt = `Actúa como un storyteller experto y creador de contenido viral para redes sociales. Tu especialidad es transformar información de la web (artículos, entrevistas, videos de YouTube) en relatos cortos y cautivadores.
 
-**EJEMPLOS DE REFERENCIA (NO COPIAR, SOLO APRENDER EL ESTILO):**
+**TAREA PRINCIPAL:**
+1.  **Investiga:** Realiza una búsqueda exhaustiva en Google ${topicInstruction}${dateInstruction}. Busca anécdotas personales, datos "detrás de cámaras", hechos sorprendentes o entrevistas reveladoras.
+2.  **Crea un Relato:** Basado en la información más interesante que encuentres, escribe una historia original que siga el estilo y formato de los ejemplos de referencia.
+${varietyInstruction}
+**EJEMPLOS DE REFERENCIA (ESTILO A IMITAR OBLIGATORIAMENTE):**
+*   > 🎭 “El día que cambiaron a Marty McFly, pensé que no podría hacerlo otra vez.”
+    > "Cuando empezamos a filmar Back to the Future, había otro actor interpretando a Marty: Eric Stoltz. Rodamos durante seis semanas enteras con él. Una noche, a la 1 de la mañana, nos llamaron a todos los del elenco a un tráiler. Ahí estaba Spielberg. Nos anunció que Stoltz salía del proyecto, y que entrarían con Michael J. Fox. Yo me quedé helado. Había trabajado tanto en encontrar el ritmo de Doc, en conectar con esa energía, que pensé: “No voy a poder hacerlo otra vez.” Pero en cuanto Michael llegó, todo fluyó. Desde la primera escena, hubo una química instantánea, natural, sin esfuerzo. A veces, los grandes cambios que más miedo dan… son justo los que terminan salvando una historia."
+    > 🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz por Michael J. Fox en Back to the Future.
+*   > 😢🎙“Antes de entrar a La Academia vivía en una bodega prestada porque mi departamento se había incendiado. No podía ni bañarme. Yo era un cantante de bares. Todo cambió cuando el casting de La Academia se realizó justo arriba de uno de los bares donde yo cantaba. Mis amigos me insistieron en que fuera… lo hice, y mi vida cambió para siempre.”
+    > "Entré a La Academia en 2002, pero no fue una historia normal. Unas semanas antes mi vida se había incendiado… literalmente. El departamento donde vivía con mi hijo Tristan, en Playas de Tijuana, se quemó por completo. Nos quedamos sin nada: sin ropa, sin instrumentos, sin un techo. Dormía donde podía, y un amigo me prestó una bodega para vivir. Ahí puse una alfombra, unas cajas de madera como burós y un colchón inflable. Me bañaba en casa de amigos, y usaba los baños de un bar abierto 24 horas frente a la Revolución. Fue una etapa durísima, pero seguía con la fe de que algo bueno iba a pasar.”
+    > 👉 Yahir sobre cómo, tras perderlo todo en un incendio, terminó entrando a La Academia sin haber sido seleccionado oficialmente.
+*   > 👉🌌“Mis padres nunca usaron la religión como am ena* za o advertencia. En casa no se hablaba de ‘Dios te está mirando’... al cumplir ocho años, las enseñanzas religiosas comenzaron a parecerme menos convincentes… y un año después, cuando entré por primera vez a un planetario, el universo me descubrió a mí. Desde entonces, no sentí que mi fe evolucionara: simplemente se transformó en curiosidad.”
+    > 👉 Neil deGrasse Tyson, sobre cómo la ciencia no destruyó su curiosidad espiritual, sino que la llevó a un terreno más amplio y consciente.
 
-*   **Ejemplo 1 - Hecho Sorprendente:**
-    > Curiosidades que con suerte NO sabías. El actor Rowan Atkinson logró lo que cualquier actor soñaría, ya que su personaje de Mr. Bean es mundialmente famoso... ¿qué episodios recuerdas en realidad? Y no sería difícil ya que la serie solo tuvo una única temporada con 15 episodios, pero eran repetidos tantas veces... que parecerían temporadas completas.
+**REGLAS DE FORMATO Y ESTILO (MUY ESTRUCTURADO):**
+1.  **Inicio (Hook):** Comienza siempre con un emoji relevante seguido de una frase corta, impactante y entre comillas que sirva como gancho. Ejemplo: \`🎭 “El día que cambiaron a Marty McFly...”\`
+2.  **Cuerpo del Relato:**
+    *   Desarrolla la historia en párrafos cortos y fáciles de leer.
+    *   Usa un lenguaje 100% conversacional, coloquial y natural (español de México).
+    *   Integra emojis de forma natural para añadir emoción y contexto visual.
+    *   Enfócate en el aspecto humano o sorprendente del dato que encontraste. Transforma la información en una narrativa personal y emocional.
+3.  **Cierre (Atribución):** Termina siempre la historia con una línea de atribución que siga este formato: \`[Emoji] [Nombre de la persona o fuente] sobre [breve descripción del contexto]\`. Ejemplo: \`🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz...\`
+4.  **Parámetros Adicionales:**
+    *   La historia debe ser ${length}.
+    *   El tono general debe ser ${tone}.
+    *   El objetivo es ${reactionValue}.
 
-*   **Ejemplo 2 - Anécdota "Detrás de Cámaras":**
-    > Brad Pitt casi pierde su trabajo por culpa del final de la película? El estudio quiso cambiar el final porque lo consideraba demasiado oscuro... Pero Brad Pitt apostó por ese final y les dijo; "Si cambian el final yo me bajo del proyecto”. Por suerte dejaron ese final intacto y se convirtió en uno de los más impactantes de la historia del cine. ¿Os la imagináis con un final feliz?
-
-*   **Ejemplo 3 - Lista de Datos:**
-    > Datos curiosos que quizá no sabías sobre el cine 🎬✨
-    > 1️⃣ La primera proyección pública de cine fue en París en 1895...
-    > 2️⃣ El famoso rugido del león de MGM fue grabado en 1928...
-    > 3️⃣ La primera película a color no fue El mago de Oz, sino Viaje a la Luna (1902)...
-
-**TU TAREA AHORA:**
-Crea un post de curiosidades COMPLETAMENTE NUEVO Y ORIGINAL sobre el tema que te daré, siguiendo el estilo de los ejemplos y las reglas a continuación.
-
-**Proceso Obligatorio:**
-1.  **Investigación:** Realiza una búsqueda en Google sobre "${topic}"${dateInstruction}. Busca datos curiosos, hechos poco conocidos, historias detrás de cámaras, anécdotas o estadísticas sorprendentes.
-2.  **Creación de Contenido:** Basado en lo que encuentres, redacta un post. Puedes usar diferentes formatos según lo que se ajuste mejor: un relato de una anécdota (como el de Brad Pitt), una lista de datos curiosos (como el de 'Datos curiosos del cine'), o una explicación de un hecho sorprendente (como el de Mr. Bean). A veces, puedes terminar con una pregunta para fomentar la interacción.
-
-**Reglas del Post:**
-- **Tono:** La narrativa debe tener ${tone}.
-- **Longitud:** El post debe ser de longitud ${length}.
-- **Objetivo:** El post debe ${reactionSelect.value}.
-- **Idioma y Estilo (CRÍTICO):** Usa un español 100% natural, coloquial y conversacional, como el que se habla en México. El post debe ser entretenido, no un reporte académico.
-- **Formato:** El resultado debe ser únicamente el texto del post, sin títulos, explicaciones, saludos o listas de fuentes.`;
-            config.tools = [{ googleSearch: {} }];
+**SALIDA FINAL:**
+El resultado final debe ser únicamente el texto de la historia, siguiendo todas las reglas de formato, sin añadir explicaciones, títulos o saludos.`;
+            config = { tools: [{ googleSearch: {} }] };
         }
-        
+
         try {
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
                 contents: finalPrompt,
-                config,
+                config: config,
             });
 
-            generatedTextEl.textContent = response.text;
+            const newStory = response.text;
+            generatedTextEl.textContent = newStory;
+
+            // Update state for variety
+            lastGeneratedStory = newStory;
+            lastTopic = topic;
+
+            if (currentMode === 'web') {
+                const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+                sourcesListEl.innerHTML = '';
+                if (groundingChunks && groundingChunks.length > 0) {
+                     groundingChunks.forEach(chunk => {
+                        const uri = chunk.web?.uri;
+                        const title = chunk.web?.title || uri;
+                        if (uri) {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.href = uri;
+                            a.textContent = title;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            li.appendChild(a);
+                            sourcesListEl.appendChild(li);
+                        }
+                    });
+                    sourcesCard.classList.remove('hidden');
+                }
+            }
             resultsContainer.classList.remove('hidden');
 
         } catch (error) {
@@ -221,35 +270,23 @@ Crea un post de curiosidades COMPLETAMENTE NUEVO Y ORIGINAL sobre el tema que te
     };
     
     // --- Event Listeners ---
-    topicInput.addEventListener('input', () => {
-        // In web mode, a topic is required. In other modes, it's optional.
-        if (currentMode === 'web') {
-            generateBtn.disabled = !topicInput.value.trim();
-        } else {
-            generateBtn.disabled = false;
-        }
-    });
-
     modeSelector.addEventListener('click', (e) => {
         const button = e.target.closest('button');
         if (button && button.dataset.mode) {
             currentMode = button.dataset.mode;
             modeSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            
-            // Show/hide date filter based on mode
             dateFilterGroup.classList.toggle('hidden', currentMode !== 'web');
+            structureGroup.classList.toggle('hidden', currentMode !== 'chisme');
+        }
+    });
 
-            // Re-evaluate button disabled state when mode changes
-            if (currentMode === 'web') {
-                generateBtn.disabled = !topicInput.value.trim();
-                topicInput.labels[0].textContent = "Tema de la Historia";
-                topicInput.placeholder = "Ej: Película 'Seven', Mr. Bean...";
-            } else {
-                generateBtn.disabled = false;
-                 topicInput.labels[0].textContent = "Tema de la Historia (o dejar en blanco)";
-                 topicInput.placeholder = "Ej: Superar un miedo (opcional)...";
-            }
+    structureSelector.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button && button.dataset.structure) {
+            currentStructure = button.dataset.structure;
+            structureSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
         }
     });
 
@@ -281,6 +318,8 @@ Crea un post de curiosidades COMPLETAMENTE NUEVO Y ORIGINAL sobre el tema que te
         });
     });
 
-    // Initial State Setup
-    generateBtn.disabled = false; // Enabled by default for "inventada" and "chisme" modes
+    // --- Init ---
+    modeSelector.querySelector(`button[data-mode="${currentMode}"]`).click();
+    structureSelector.querySelector(`button[data-structure="${currentStructure}"]`).click();
+    lengthSelector.querySelector(`button[data-length="${currentLength}"]`).click();
 };
