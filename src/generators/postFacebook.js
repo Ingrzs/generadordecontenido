@@ -20,6 +20,13 @@ export const initFacebookPostGenerator = () => {
     const copyBtnIcon = copyBtn.querySelector('svg');
     const copyBtnText = 'Copiar';
 
+    // New date filter elements
+    const dateModeSelector = document.getElementById('fb-date-mode-selector');
+    const quickDateFiltersContainer = document.getElementById('fb-quick-date-filters');
+    const specificDateFiltersContainer = document.getElementById('fb-specific-date-filters');
+    const quickDateSelect = document.getElementById('fb-quick-date-select');
+
+
     let currentLength = 'media';
 
     const getToneInstruction = (toneKey) => {
@@ -41,7 +48,7 @@ export const initFacebookPostGenerator = () => {
             'pure_polemic': 'Adopta un tono puramente polémico. Tu objetivo es dividir opiniones de forma directa. Usa absolutos, juicios y frases tajantes sin ambigüedad.' + baseInstruction,
             'pure_humorous': 'Adopta un tono puramente humorístico. Tu objetivo es hacer reír o entretener de forma ligera. Usa juegos de palabras, exageraciones y observaciones graciosas de lo cotidiano.' + baseInstruction,
             'pure_ironic': 'Adopta un tono puramente irónico. Tu objetivo es señalar lo absurdo diciendo exactamente lo contrario. Usa un sarcasmo elegante y críticas indirectas.' + baseInstruction,
-            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas y frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
+            'pure_curious': 'Adopta un tono puramente curioso. Tu objetivo es despertar el interés y crear un gancho (hook). Usa preguntas o frases incompletas que dejen al lector queriendo saber más.' + baseInstruction,
             'pure_emotional': 'Adopta un tono puramente emocional. Tu objetivo es crear una conexión profunda y sentimental. Usa frases que exploren sentimientos universales como el dolor, el amor o la soledad.' + baseInstruction,
             'pure_critical': 'Adopta un tono puramente crítico. Tu objetivo es exponer una opinión fuerte y directa. Usa frases tajantes, juicios y declaraciones firmes sobre un tema.' + baseInstruction,
             'pure_motivational': 'Adopta un tono puramente motivacional. Tu objetivo es inspirar y empoderar al lector. Usa imperativos, frases de aliento y llamados a la acción.' + baseInstruction,
@@ -95,7 +102,6 @@ export const initFacebookPostGenerator = () => {
     };
 
     const generatePost = async () => {
-        if (!validateDate()) return;
         const ai = getAiInstance();
         if (!ai) {
              alert('Por favor, introduce tu clave API para generar el post.');
@@ -113,9 +119,28 @@ export const initFacebookPostGenerator = () => {
         resultsContainer.classList.add('hidden');
 
         let dateFilter = '';
-        if(yearSelect.value) dateFilter += ` del año ${yearSelect.value}`;
-        if(monthSelect.value) dateFilter += ` del mes ${monthSelect.value}`;
-        if(daySelect.value) dateFilter += ` del día ${daySelect.value}`;
+        const activeModeButton = dateModeSelector.querySelector('button.active');
+        const mode = activeModeButton ? activeModeButton.dataset.mode : 'quick';
+
+        if (mode === 'specific') {
+            if (!validateDate()) {
+                toggleLoading(false);
+                return;
+            }
+            if (yearSelect.value) dateFilter += ` del año ${yearSelect.value}`;
+            if (monthSelect.value) dateFilter += ` del mes ${monthSelect.value}`;
+            if (daySelect.value) dateFilter += ` del día ${daySelect.value}`;
+        } else { // 'quick' mode
+            const quickFilterValue = quickDateSelect.value;
+            switch(quickFilterValue) {
+                case 'hour': dateFilter = ' de la última hora'; break;
+                case '4hours': dateFilter = ' de las últimas 4 horas'; break;
+                case '24hours': dateFilter = ' de las últimas 24 horas'; break;
+                case '48hours': dateFilter = ' de las últimas 48 horas'; break;
+                case '7days': dateFilter = ' de los últimos 7 días'; break;
+                case 'any': default: dateFilter = ''; break;
+            }
+        }
 
         const toneInstruction = getToneInstruction(toneSelect.value);
 
@@ -193,6 +218,22 @@ Paso 2: Redacción del Post.
             currentLength = button.dataset.length;
             lengthSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
+        }
+    });
+
+    dateModeSelector.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button) {
+            const mode = button.dataset.mode;
+            dateModeSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const isQuickMode = mode === 'quick';
+            quickDateFiltersContainer.classList.toggle('hidden', !isQuickMode);
+            specificDateFiltersContainer.classList.toggle('hidden', isQuickMode);
+            if(isQuickMode) {
+                dateError.classList.add('hidden'); // Hide specific date error when switching
+            }
         }
     });
 
