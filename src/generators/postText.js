@@ -1,5 +1,7 @@
 
 
+
+
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { makeEditable } from "../utils/ui.js";
@@ -306,14 +308,17 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
                 case 'hour':
                     dateInstruction = ' que ocurrieron en la última hora';
                     break;
-                case 'today':
-                    dateInstruction = ' que ocurrieron hoy (en las últimas 24 horas)';
+                case '4hours':
+                    dateInstruction = ' que ocurrieron en las últimas 4 horas';
                     break;
-                case 'yesterday':
-                    dateInstruction = ' que ocurrieron ayer';
+                case '24hours':
+                    dateInstruction = ' que ocurrieron en las últimas 24 horas';
                     break;
-                case 'before_yesterday':
-                    dateInstruction = ' que ocurrieron antier';
+                case '48hours':
+                    dateInstruction = ' que ocurrieron en las últimas 48 horas';
+                    break;
+                case '7days':
+                    dateInstruction = ' que ocurrieron en los últimos 7 días';
                     break;
                 case 'any':
                 default:
@@ -398,7 +403,9 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/png');
                     link.download = `post_${index + 1}.png`;
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
                 } catch (error) {
                     console.error("Error al generar la imagen para el post:", error);
                     alert("No se pudo generar la imagen.");
