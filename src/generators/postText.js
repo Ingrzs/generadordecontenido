@@ -2,6 +2,8 @@
 
 
 
+
+
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { makeEditable } from "../utils/ui.js";
@@ -385,8 +387,11 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
             resultItem.className = 'result-item';
 
             const postClone = postPreviewTemplate.cloneNode(true);
-            postClone.removeAttribute('id'); // Ensure unique IDs
             
+            // Remove all IDs from the clone and its descendants to prevent conflicts
+            postClone.removeAttribute('id');
+            postClone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
             const textElement = postClone.querySelector('.post-text');
             textElement.textContent = text;
             textElement.style.fontFamily = postTextP.style.fontFamily; // Ensure font is copied
@@ -399,6 +404,10 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
             downloadBtn.textContent = 'Descargar';
             downloadBtn.onclick = async () => {
                 try {
+                    // Ensure no element is being edited during capture
+                    const currentlyEditing = postClone.querySelector('[contenteditable="true"]');
+                    if (currentlyEditing) currentlyEditing.blur();
+
                     const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/png');
