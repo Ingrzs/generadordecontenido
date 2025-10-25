@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { makeEditable } from "../utils/ui.js";
@@ -300,9 +294,6 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
 
         } else if (currentPostGenMode === 'ai-trend') {
             const trendTopic = aiTrendTopicInput.value.trim();
-            if (!trendTopic) {
-                throw new Error("Por favor, introduce un tema de tendencia para buscar.");
-            }
             
             const dateFilterValue = aiTrendDateFilter.value;
             let dateInstruction = '';
@@ -328,10 +319,14 @@ El resultado debe ser un objeto JSON que siga el esquema proporcionado, sin expl
                     break;
             }
 
+            const searchInstruction = trendTopic
+                ? `relacionadas con el siguiente tema: "${trendTopic}"`
+                : `generales y más virales del momento`;
+
             prompt = `${basePrompt}
 
 Paso 1: Investigación.
-Primero, realiza una búsqueda en Google sobre las últimas noticias, conversaciones y tendencias relacionadas con el siguiente tema: "${trendTopic}"${dateInstruction}.
+Primero, realiza una búsqueda en Google sobre las últimas noticias, conversaciones y tendencias ${searchInstruction}${dateInstruction}.
 
 Paso 2: Generación.
 Basándote en los resultados más relevantes y recientes de tu búsqueda, genera ${quantity} frases que cumplan con estos requisitos:
@@ -409,12 +404,14 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
                     if (currentlyEditing) currentlyEditing.blur();
 
                     const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
-                    const link = document.createElement('a');
-                    link.href = canvas.toDataURL('image/png');
-                    link.download = `post_${index + 1}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const newTab = window.open();
+                    if (newTab) {
+                        newTab.document.write(`<body style="margin:0;"><img src="${dataUrl}" style="width:100%; height:auto;"></body>`);
+                        newTab.document.title = `post_${index + 1}`;
+                    } else {
+                        alert("Tu navegador bloqueó la nueva pestaña. Por favor, permite las ventanas emergentes para este sitio.");
+                    }
                 } catch (error) {
                     console.error("Error al generar la imagen para el post:", error);
                     alert("No se pudo generar la imagen.");
