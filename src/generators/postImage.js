@@ -411,7 +411,10 @@ export const initImagePostGenerator = () => {
             resultItem.className = 'result-item';
 
             const postClone = previewTemplate.cloneNode(true);
+            
+            // Remove all IDs from the clone and its descendants to prevent conflicts
             postClone.removeAttribute('id');
+            postClone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
 
             const titleElement = postClone.querySelector('.image-post-title');
             titleElement.textContent = title;
@@ -432,6 +435,10 @@ export const initImagePostGenerator = () => {
             downloadBtn.textContent = 'Descargar';
             downloadBtn.onclick = async () => {
                 try {
+                    // Ensure no element is being edited during capture
+                    const currentlyEditing = postClone.querySelector('[contenteditable="true"]');
+                    if (currentlyEditing) currentlyEditing.blur();
+
                     const canvas = await html2canvas(postClone, { useCORS: true, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
                     link.href = canvas.toDataURL('image/png');
