@@ -19,12 +19,17 @@ export const initStoriesGenerator = () => {
     const copyBtn = document.getElementById('st-copy-btn');
     const sourcesCard = document.querySelector('.st-sources-card');
     const sourcesListEl = document.getElementById('st-sources-list');
+    const imageStyleSelector = document.getElementById('st-image-style-selector');
+    const imagePromptCard = document.getElementById('st-image-prompt-card');
+    const generatedPromptEl = document.getElementById('st-generated-prompt');
+    const copyPromptBtn = document.getElementById('st-copy-prompt-btn');
 
 
     // --- State ---
     let currentMode = 'chisme';
     let currentStructure = 'dilema_consejo';
     let currentLength = 'media';
+    let currentImageStyle = 'realista';
     let lastGeneratedStory = ''; // To request a different story on the same topic
     let lastTopic = ''; // To track the last used topic
 
@@ -80,6 +85,7 @@ export const initStoriesGenerator = () => {
         initialState.style.display = 'none';
         resultsContainer.classList.add('hidden');
         sourcesCard.classList.add('hidden');
+        imagePromptCard.classList.add('hidden');
 
 
         let finalPrompt;
@@ -236,6 +242,60 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             // Update state for variety
             lastGeneratedStory = newStory;
             lastTopic = topic;
+            
+            // --- NEW: Generate Image Prompt ---
+            if (currentMode === 'inventada' || currentMode === 'chisme') {
+                loader.querySelector('p').textContent = 'Generando prompt para imagen...';
+                
+                const toneDescription = toneSelect.options[toneSelect.selectedIndex].text;
+                const imageStyle = currentImageStyle === 'animado' ? 'Animated / Comic' : (currentImageStyle === 'anime' ? 'Anime' : 'Realistic');
+
+                const imagePromptInstruction = `
+                **ROLE: "Narrative Visual Generator"**
+
+                You are an expert AI specializing in creating descriptive image prompts for viral micro-stories and confessions. Your task is to analyze the provided story and its NARRATIVE TONE, then generate a single, concise, and highly descriptive image prompt in ENGLISH, suitable for AI image generators like Midjourney or DALL-E.
+
+                **VISUAL INTERPRETATION GUIDE (Based on Narrative Tone):**
+                - **Sarcastic + Humorous / Double Meaning + Humor:** Generate a prompt for a realistic photo with exaggerated gestures or comical everyday situations. Bright lighting. (e.g., "Man laughing nervously looking at his phone as if hiding something.")
+                - **Polemic + Opinionated / Curious + Polemic / Sarcastic + Polemic:** Generate a prompt for a cinematic realistic style, with confident or defiant expressions. Urban or modern indoor backgrounds. (e.g., "Person looking directly at the camera with a challenging gesture, blurred city background.")
+                - **Ironic + Critical / Inspiring + Critical:** Generate a prompt for a natural photographic style, with a reflective or cynical gaze. Neutral or warm colors. (e.g., "Thoughtful woman in a coffee shop, sarcastic expression, warm tone.")
+                - **Emotional + Reflective / Dramatic + Emotional:** Generate a prompt for a cinematic realistic photo, dim light, intimate or nostalgic atmosphere. (e.g., "Woman looking out the window while it rains, melancholic expression.")
+                - **Curious + Emotional / Motivational:** Generate a prompt for a realistic style with a poetic touch or semi-realistic anime. Soft colors and diffuse light. (e.g., "Young girl looking at the sunset sky, hopeful air.")
+                - **Purely Critical / Polemic / Ironic:** Generate a prompt for expressive faces with a fixed gaze or a gesture of disapproval. Minimalist background. (e.g., "Man with a raised eyebrow and a sarcastic smile, neutral background.")
+                - **Purely Humorous / Double Meaning:** Generate a prompt for everyday scenes with a comic or spicy touch. Warm or daylight. (e.g., "Surprised woman in the kitchen holding her cell phone, amused expression.")
+                - **Purely Dramatic / Emotional:** Generate a prompt for portraits with emotional intensity, tears, soft shadows. (e.g., "Woman crying discreetly, dark background, dim realistic light.")
+
+                **TASK:**
+                1. Analyze the story and the provided narrative tone.
+                2. Use the guide above to interpret the tone visually.
+                3. Create a descriptive prompt for a 9:16 vertical image. The prompt should be in ENGLISH.
+
+                **SELECTED IMAGE STYLE:**
+                The final prompt must be tailored to the following style: "${imageStyle}".
+
+                **STRICT OUTPUT RULES:**
+                - The output must be ONLY the text of the prompt.
+                - DO NOT include any explanations, greetings, or the word "Prompt:".
+
+                ---
+                **STORY TO ANALYZE:**
+                "${newStory}"
+                ---
+                **NARRATIVE TONE TO APPLY:**
+                "${toneDescription}"
+                ---
+                `;
+
+                const promptResponse = await ai.models.generateContent({
+                    model: "gemini-2.5-flash",
+                    contents: imagePromptInstruction,
+                });
+
+                const imagePrompt = promptResponse.text.trim();
+                generatedPromptEl.textContent = imagePrompt;
+                imagePromptCard.classList.remove('hidden');
+            }
+
 
             if (currentMode === 'web') {
                 const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
@@ -266,6 +326,7 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             initialState.style.display = 'flex';
         } finally {
             toggleLoading(false);
+            loader.querySelector('p').textContent = 'Escribiendo historia...';
         }
     };
     
@@ -298,6 +359,15 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             button.classList.add('active');
         }
     });
+    
+    imageStyleSelector.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button && button.dataset.style) {
+            currentImageStyle = button.dataset.style;
+            imageStyleSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+    });
 
     generateBtn.addEventListener('click', generateStory);
     
@@ -315,6 +385,23 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
         }).catch(err => {
             console.error('Error al copiar texto: ', err);
             alert('No se pudo copiar el texto.');
+        });
+    });
+
+    copyPromptBtn.addEventListener('click', () => {
+        if (!generatedPromptEl.textContent) return;
+        navigator.clipboard.writeText(generatedPromptEl.textContent).then(() => {
+            const originalContent = copyPromptBtn.innerHTML;
+            copyPromptBtn.textContent = '¡Copiado!';
+            copyPromptBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyPromptBtn.innerHTML = originalContent;
+                copyPromptBtn.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Error al copiar el prompt: ', err);
+            alert('No se pudo copiar el prompt.');
         });
     });
 
