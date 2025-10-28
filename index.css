@@ -2168,7 +2168,8 @@ span[contenteditable="true"] {
     font-size: 1.1rem;
 }
 
-#st-copy-btn {
+#st-copy-btn,
+#st-copy-prompt-btn {
     background-color: var(--fb-bg-tertiary);
     color: var(--fb-text-secondary);
     border: 1px solid var(--fb-border-color);
@@ -2181,17 +2182,20 @@ span[contenteditable="true"] {
     gap: 6px;
     transition: background-color 0.2s, color 0.2s;
 }
-#st-copy-btn:hover {
+#st-copy-btn:hover,
+#st-copy-prompt-btn:hover {
     background-color: var(--fb-border-color);
     color: var(--fb-text-primary);
 }
-#st-copy-btn.copied {
+#st-copy-btn.copied,
+#st-copy-prompt-btn.copied {
     background-color: #22c55e;
     color: white;
     border-color: #22c55e;
 }
 
-#st-generated-text {
+#st-generated-text,
+#st-generated-prompt {
     color: var(--fb-text-primary);
     white-space: pre-wrap;
     line-height: 1.6;
@@ -2199,6 +2203,12 @@ span[contenteditable="true"] {
     max-height: 400px;
     overflow-y: auto;
     padding-right: 10px;
+}
+
+#st-generated-prompt {
+    font-style: italic;
+    max-height: none;
+    overflow-y: visible;
 }
 
 .st-sources-card {
