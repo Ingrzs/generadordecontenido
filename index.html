@@ -260,8 +260,8 @@ _blank">Obtén tu clave aquí.</a></p>
                                     <option value="7days">Últimos 7 Días</option>
                                 </select>
                             </div>
-                            <h3>Tipo de Contenido</h3>
                             <div class="form-group">
+                                <label for="post-content-type-selector">Tipo de Contenido</label>
                                 <select id="post-content-type-selector">
                                     <option value="meme" selected>Meme</option>
                                     <option value="frase_opinion">Frase / Opinión</option>
@@ -274,44 +274,56 @@ _blank">Obtén tu clave aquí.</a></p>
                                     <option value="cristiana">Frase Cristiana</option>
                                     <option value="manipuladora">Frase Manipuladora / Sugestiva</option>
                                 </select>
+                                <small id="content-type-tooltip" class="content-type-tooltip"></small>
                             </div>
                              <div class="form-group">
                                 <label for="ai-tone">Tono (Modificador)</label>
                                 <select id="ai-tone">
-                                     <optgroup label="🔥 TONOS COMBINADOS (Top 10)">
-                                        <option value="sarcastic_humorous" selected>😏 Sarcástico + Humorístico</option>
-                                        <option value="polemic_opinative">💣 Polémico + Opinativo</option>
-                                        <option value="ironic_critical">🫣 Irónico + Crítico</option>
-                                        <option value="emotional_reflective">💔 Emocional + Reflexivo</option>
-                                        <option value="curious_emotional">😮 Curioso + Emocional</option>
-                                        <option value="inspiring_critical">💅 Inspirador + Crítico</option>
-                                        <option value="sarcastic_polemic">🤨 Sarcástico + Polémico</option>
-                                        <option value="double_meaning_humor">😏 Doble sentido + Humor</option>
-                                        <option value="curious_polemic">🧠 Curioso + Polémico</option>
-                                        <option value="dramatic_emotional">💔 Dramático + Emocional</option>
+                                    <optgroup label="⚡ TONOS COMBINADOS">
+                                        <option value="sarcastic_humorous">Sarcástico + Humorístico</option>
+                                        <option value="polemic_opinative">Polémico + Opinativo</option>
+                                        <option value="ironic_critical">Irónico + Crítico</option>
+                                        <option value="emotional_reflective">Emocional + Reflexivo</option>
+                                        <option value="curious_emotional">Curioso + Emocional</option>
+                                        <option value="inspiring_critical">Inspirador + Crítico</option>
+                                        <option value="sarcastic_polemic">Sarcástico + Polémico</option>
+                                        <option value="double_meaning_humor">Doble sentido + Humor</option>
+                                        <option value="curious_polemic">Curioso + Polémico</option>
+                                        <option value="dramatic_emotional">Dramático + Emocional</option>
+                                        <option value="humorous_reflective">Humorístico + Reflexivo</option>
+                                        <option value="polemic_emotional">Polémico + Emocional</option>
+                                        <option value="inspiring_reflective">Inspirador + Reflexivo</option>
+                                        <option value="curious_critical">Curioso + Crítico</option>
+                                        <option value="ironic_humorous">Irónico + Humorístico</option>
                                     </optgroup>
-                                    <optgroup label="🧠 TONOS PUROS (Individuales)">
-                                        <option value="pure_sarcastic">🧠 Sarcástico</option>
-                                        <option value="pure_polemic">💣 Polémico</option>
-                                        <option value="pure_humorous">😜 Humorístico</option>
-                                        <option value="pure_ironic">🤨 Irónico</option>
-                                        <option value="pure_curious">🧪 Curioso</option>
-                                        <option value="pure_emotional">💔 Emocional</option>
-                                        <option value="pure_critical">🧨 Crítico</option>
-                                        <option value="pure_motivational">✨ Motivacional</option>
-                                        <option value="pure_double_meaning">🫣 Doble sentido</option>
-                                        <option value="pure_dramatic">🎭 Dramático</option>
+                                    <optgroup label="🧠 TONOS PUROS">
+                                        <option value="pure_sarcastic">Sarcástico</option>
+                                        <option value="pure_polemic">Polémico</option>
+                                        <option value="pure_humorous">Humorístico</option>
+                                        <option value="pure_ironic">Irónico</option>
+                                        <option value="pure_curious">Curioso</option>
+                                        <option value="pure_emotional">Emocional</option>
+                                        <option value="pure_critical">Crítico</option>
+                                        <option value="pure_motivational">Motivacional</option>
+                                        <option value="pure_double_meaning">Doble sentido</option>
+                                        <option value="pure_reflective">Reflexivo</option>
+                                        <option value="pure_suggestive">Sugestivo / Espiritual</option>
                                     </optgroup>
                                 </select>
                             </div>
                              <div class="form-group">
                                 <label for="ai-reaction">Objetivo (Reacción Buscada)</label>
                                 <select id="ai-reaction">
-                                    <option value="risa e identificación">Risa e Identificación</option>
-                                    <option value="polémica y debate">Polémica y Debate</option>
-                                    <option value="comentarios y participación">Comentarios y Participación</option>
-                                    <option value="reflexión profunda">Reflexión Profunda</option>
-                                    <option value="inspiración y motivación">Inspiración y Motivación</option>
+                                    <option value="risa e identificación">😂 Risa e Identificación</option>
+                                    <option value="polémica y debate">💬 Polémica y Debate</option>
+                                    <option value="reflexión profunda">❤️ Reflexión Profunda</option>
+                                    <option value="inspiración y motivación">🌟 Inspiración y Motivación</option>
+                                    <option value="comentarios y participación">🤔 Comentarios y Participación</option>
+                                    <option value="sorpresa o curiosidad">😮 Sorpresa o Curiosidad</option>
+                                    <option value="identificación social">🧠 Identificación Social</option>
+                                    <option value="emoción y empatía">💌 Emoción y Empatía</option>
+                                    <option value="compartidos masivos">🔁 Compartidos masivos</option>
+                                    <option value="fe y agradecimiento">🙏 Fe y Agradecimiento</option>
                                 </select>
                             </div>
                              <div class="form-group">
