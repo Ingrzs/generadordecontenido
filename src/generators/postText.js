@@ -37,6 +37,7 @@ export const initPostTextGenerator = () => {
     const aiTrendTopicInput = document.getElementById('ai-trend-topic');
     const aiTrendDateFilter = document.getElementById('ai-trend-date-filter');
     const contentTypeSelector = document.getElementById('post-content-type-selector');
+    const contentTypeTooltip = document.getElementById('content-type-tooltip');
     const aiToneSelect = document.getElementById('ai-tone');
     const aiReactionSelect = document.getElementById('ai-reaction');
     const aiLengthSelector = document.getElementById('ai-length-selector');
@@ -46,6 +47,19 @@ export const initPostTextGenerator = () => {
     // --- State ---
     let currentPostGenMode = 'manual';
     let currentAiLength = 'medio';
+
+    const contentStrategyMap = {
+        'meme': { tone: 'sarcastic_humorous', reaction: 'risa e identificación', tooltip: 'Ideal para viralidad y humor rápido. Busca que la gente se ría y etiquete a sus amigos.' },
+        'frase_opinion': { tone: 'emotional_reflective', reaction: 'reflexión profunda', tooltip: 'Busca generar conexión emocional o una reflexión breve. Ideal para guardados y comentarios de acuerdo/desacuerdo.' },
+        'debate': { tone: 'polemic_opinative', reaction: 'polémica y debate', tooltip: 'Perfecto para generar comentarios masivos y opiniones divididas. Usa un tono fuerte y directo.' },
+        'debatible': { tone: 'ironic_critical', reaction: 'comentarios y participación', tooltip: 'Genera interacción sin tanto conflicto. Invita a la gente a dar su punto de vista sobre una idea.' },
+        'emocional': { tone: 'dramatic_emotional', reaction: 'emoción y empatía', tooltip: 'Conecta con los sentimientos del público. Busca que comenten "me pasó" o "justo lo que necesitaba leer".' },
+        'mananera': { tone: 'pure_motivational', reaction: 'inspiración y motivación', tooltip: 'Para empezar el día con energía positiva. Busca likes y comentarios de "buenos días".' },
+        'reflexion': { tone: 'emotional_reflective', reaction: 'reflexión profunda', tooltip: 'Para cerrar el día con una idea profunda. Fomenta que se guarde y se comparta con alguien especial.' },
+        'final': { tone: 'inspiring_reflective', reaction: 'inspiración y motivación', tooltip: 'Ofrece un cierre positivo o inspirador. Ideal para generar lealtad y comentarios de agradecimiento.' },
+        'cristiana': { tone: 'pure_suggestive', reaction: 'fe y agradecimiento', tooltip: 'Conecta a un nivel espiritual. Busca comentarios como "Amén" y que se comparta en grupos de fe.' },
+        'manipuladora': { tone: 'pure_suggestive', reaction: 'compartidos masivos', tooltip: 'Usa un gancho psicológico para alta retención. Frases como "Si lees esto, es una señal..."' }
+    };
 
     const postsSchema = {
         type: Type.OBJECT,
@@ -63,6 +77,17 @@ export const initPostTextGenerator = () => {
     };
 
     // --- Functions ---
+    const updateAiSuggestions = (contentType) => {
+        const strategy = contentStrategyMap[contentType];
+        if (strategy) {
+            aiToneSelect.value = strategy.tone;
+            aiReactionSelect.value = strategy.reaction;
+            contentTypeTooltip.textContent = `💡 Sugerencia: ${strategy.tooltip}`;
+        } else {
+            contentTypeTooltip.textContent = '';
+        }
+    };
+
     const savePostTemplateData = () => {
         const data = {
             profilePic: postProfilePicImg.src,
@@ -190,7 +215,8 @@ export const initPostTextGenerator = () => {
             'pure_critical': 'Adopta un tono puramente crítico. Tu objetivo es exponer una opinión fuerte y directa. Usa frases tajantes, juicios y declaraciones firmes sobre un tema.' + baseInstruction,
             'pure_motivational': 'Adopta un tono puramente motivacional. Tu objetivo es inspirar y empoderar al lector. Usa imperativos, frases de aliento y llamados a la acción.' + baseInstruction,
             'pure_double_meaning': 'Adopta un tono puramente de doble sentido. Tu objetivo es jugar con la ambigüedad para conectar de forma pícara. Usa insinuaciones y frases con doble lectura.' + baseInstruction,
-            'pure_dramatic': 'Adopta un tono puramente dramático. Tu objetivo es impactar emocionalmente. Usa un lenguaje intenso, profundo y con carga sentimental para describir una situación.' + baseInstruction
+            'pure_reflective': `Adopta un tono puramente reflexivo. Tu objetivo es provocar un pensamiento maduro o una introspección. Usa frases que inviten a la sabiduría o a cuestionar la vida.` + baseInstruction,
+            'pure_suggestive': `Adopta un tono puramente sugestivo o espiritual. Tu objetivo es crear un efecto psicológico o de conexión mística. Usa frases como "Si estás leyendo esto..." para crear un sentido de destino o casualidad.` + baseInstruction,
         };
         return toneMap[toneKey] || 'Actúa como un copywriter experto en redes sociales. Escribe en un tono neutro e informativo.' + baseInstruction;
     };
@@ -238,7 +264,7 @@ export const initPostTextGenerator = () => {
 
         const contentType = contentTypeSelector.value;
         const personaInstruction = getPersonaInstruction(contentType);
-        const reaction = aiReactionSelect.value;
+        const reaction = aiReactionSelect.options[aiReactionSelect.selectedIndex].text;
         const lengthInstruction = getLengthInstruction(currentAiLength);
         const quantity = aiQuantityInput.value;
         const toneDescription = aiToneSelect.options[aiToneSelect.selectedIndex].text;
@@ -501,6 +527,10 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
         }
     });
 
+    contentTypeSelector.addEventListener('change', (e) => {
+        updateAiSuggestions(e.target.value);
+    });
+
     generatePostsBtn.addEventListener('click', generatePosts);
     downloadAllZipBtn.addEventListener('click', () => {
         const postElements = resultsGrid.querySelectorAll('.post-template');
@@ -516,4 +546,5 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
     setActiveTemplate('facebook');
     switchPostGenMode('manual');
     updatePostFont();
+    updateAiSuggestions(contentTypeSelector.value); // Set initial suggestion
 };
