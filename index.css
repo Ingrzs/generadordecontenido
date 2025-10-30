@@ -1139,6 +1139,15 @@ span[contenteditable="true"] {
     font-size: 1.1rem;
 }
 
+.content-type-tooltip {
+    font-size: 0.8rem;
+    color: var(--meta-text-color);
+    margin-top: 4px;
+    display: block;
+    min-height: 1.2em; /* Prevents layout shift when text appears/disappears */
+}
+
+
 /* --- Estilos específicos: Post con Imagen --- */
 #image-post-header-options {
     display: flex;
