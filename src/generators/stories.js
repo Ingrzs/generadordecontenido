@@ -33,7 +33,41 @@ export const initStoriesGenerator = () => {
     let lastGeneratedStory = ''; // To request a different story on the same topic
     let lastTopic = ''; // To track the last used topic
 
+    // --- NEW: Strategy Map for Suggestions ---
+    const storyStrategyMap = {
+        'desahogo': {
+            tone: 'dramatic_emotional',
+            reaction: 'generar empatía y ser compartida'
+        },
+        'chisme_anecdota': {
+            tone: 'sarcastic_humorous',
+            reaction: 'hacer reír y entretener'
+        },
+        'dilema_consejo': {
+            tone: 'emotional_reflective',
+            reaction: 'provocar debate y comentarios'
+        },
+        // Defaults for other modes
+        'inventada': {
+            tone: 'emotional_reflective',
+            reaction: 'provocar una reflexión profunda'
+        },
+        'web': {
+            tone: 'curious_emotional',
+            reaction: 'crear suspense y curiosidad'
+        }
+    };
+
+
     // --- Functions ---
+    const updateStorySuggestions = (type) => {
+        const strategy = storyStrategyMap[type];
+        if (strategy) {
+            toneSelect.value = strategy.tone;
+            reactionSelect.value = strategy.reaction;
+        }
+    };
+
     const getToneInstruction = (toneKey) => {
         const toneMap = {
             'sarcastic_humorous': 'un tono humorístico y sarcástico',
@@ -339,6 +373,16 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             button.classList.add('active');
             dateFilterGroup.classList.toggle('hidden', currentMode !== 'web');
             structureGroup.classList.toggle('hidden', currentMode !== 'chisme');
+
+            // Update suggestions based on the new mode
+            if (currentMode === 'chisme') {
+                const activeStructureBtn = structureSelector.querySelector('button.active');
+                if (activeStructureBtn) {
+                    updateStorySuggestions(activeStructureBtn.dataset.structure);
+                }
+            } else {
+                updateStorySuggestions(currentMode);
+            }
         }
     });
 
@@ -348,6 +392,8 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             currentStructure = button.dataset.structure;
             structureSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
+            // Update suggestions based on the new structure
+            updateStorySuggestions(currentStructure);
         }
     });
 
