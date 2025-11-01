@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device--width, initial-scale=1.0">
     <title>Generador de Contenido Falso</title>
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -247,6 +247,28 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <label for="ai-topic">Tema Principal</label>
                                 <input type="text" id="ai-topic" placeholder="Ej: El desamor (o déjalo vacío para temas aleatorios)">
                             </div>
+                            <!-- === INICIO: Sistema de Inspiración por Nichos === -->
+                            <div id="niche-inspiration-container">
+                                <div id="niche-selector-container">
+                                    <h4>¿Necesitas Inspiración? Elige un Nicho</h4>
+                                    <div class="inspiration-grid" id="niche-selector">
+                                        <!-- Los botones de nicho se generarán aquí -->
+                                    </div>
+                                </div>
+                                <div id="subniche-selector-container" class="hidden">
+                                    <h4>Ahora, un Subnicho</h4>
+                                    <div class="inspiration-grid" id="subniche-selector">
+                                        <!-- Los botones de subnicho se generarán aquí -->
+                                    </div>
+                                </div>
+                                <div id="microtheme-suggestions-container" class="hidden">
+                                    <h4>Sugerencias de Microtemas (clic para añadir)</h4>
+                                    <div class="inspiration-grid" id="microtheme-suggestions">
+                                        <!-- Las sugerencias de microtemas se generarán aquí -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- === FIN: Sistema de Inspiración por Nichos === -->
                             <div class="form-group hidden" id="ai-trend-group">
                                 <label for="ai-trend-topic">Buscar Tendencia</label>
                                 <input type="text" id="ai-trend-topic" placeholder="Ej: Estreno de nueva película, Evento deportivo, etc.">
@@ -454,6 +476,28 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <label for="image-post-ai-topic">Tema Principal</label>
                                 <input type="text" id="image-post-ai-topic" placeholder="Ej: Frases motivacionales para el lunes">
                             </div>
+                            <!-- === INICIO: Sistema de Inspiración por Nichos para Posts con Imagen === -->
+                            <div id="image-post-niche-inspiration-container" class="hidden">
+                                <div id="image-post-niche-selector-container">
+                                    <h4>¿Necesitas Inspiración? Elige un Nicho</h4>
+                                    <div class="inspiration-grid" id="image-post-niche-selector">
+                                        <!-- Los botones de nicho se generarán aquí -->
+                                    </div>
+                                </div>
+                                <div id="image-post-subniche-selector-container" class="hidden">
+                                    <h4>Ahora, un Subnicho</h4>
+                                    <div class="inspiration-grid" id="image-post-subniche-selector">
+                                        <!-- Los botones de subnicho se generarán aquí -->
+                                    </div>
+                                </div>
+                                <div id="image-post-microtheme-suggestions-container" class="hidden">
+                                    <h4>Sugerencias de Microtemas (clic para añadir)</h4>
+                                    <div class="inspiration-grid" id="image-post-microtheme-suggestions">
+                                        <!-- Las sugerencias de microtemas se generarán aquí -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- === FIN: Sistema de Inspiración por Nichos para Posts con Imagen === -->
                              <div class="form-group hidden" id="image-post-ai-trend-group">
                                 <label for="image-post-ai-trend-topic">Buscar Tendencia</label>
                                 <input type="text" id="image-post-ai-trend-topic" placeholder="Ej: Estreno de nueva película, Evento deportivo, etc.">
