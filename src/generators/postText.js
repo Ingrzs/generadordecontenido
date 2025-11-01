@@ -1,3 +1,5 @@
+
+
 import { Type } from "@google/genai";
 import { getAiInstance } from '../services/api.js';
 import { makeEditable } from "../utils/ui.js";
@@ -43,6 +45,15 @@ export const initPostTextGenerator = () => {
     const aiLengthSelector = document.getElementById('ai-length-selector');
     const aiQuantityInput = document.getElementById('ai-quantity');
     const fontSelector = document.getElementById('post-font-selector');
+    
+    // Niche system elements
+    const nicheInspirationContainer = document.getElementById('niche-inspiration-container');
+    const nicheSelectorContainer = document.getElementById('niche-selector');
+    const subnicheSelectorContainer = document.getElementById('subniche-selector-container');
+    const subnicheSelector = document.getElementById('subniche-selector');
+    const microthemeSuggestionsContainer = document.getElementById('microtheme-suggestions-container');
+    const microthemeSuggestions = document.getElementById('microtheme-suggestions');
+
 
     // --- State ---
     let currentPostGenMode = 'manual';
@@ -159,29 +170,33 @@ export const initPostTextGenerator = () => {
         currentPostGenMode = mode;
         [modeManualBtn, modeAiTopicBtn, modeAiTrendBtn].forEach(btn => btn.classList.remove('active'));
         
-        // Hide all containers first
+        // Hide all dynamic containers first
         manualInputContainer.style.display = 'none';
         aiInputContainer.classList.add('hidden');
         aiTopicGroup.classList.add('hidden');
         aiTrendGroup.classList.add('hidden');
+        nicheInspirationContainer.classList.add('hidden'); // Hide niche container by default
 
         switch (mode) {
             case 'ai-topic':
                 modeAiTopicBtn.classList.add('active');
                 aiInputContainer.classList.remove('hidden');
                 aiTopicGroup.classList.remove('hidden');
+                nicheInspirationContainer.classList.remove('hidden'); // Only show for 'ai-topic'
                 generatePostsBtn.textContent = 'Generar por Tema';
                 break;
             case 'ai-trend':
                 modeAiTrendBtn.classList.add('active');
                 aiInputContainer.classList.remove('hidden');
                 aiTrendGroup.classList.remove('hidden');
+                // Niche container remains hidden
                 generatePostsBtn.textContent = 'Generar por Tendencia';
                 break;
             case 'manual':
             default:
                 modeManualBtn.classList.add('active');
                 manualInputContainer.style.display = 'block';
+                 // Niche container remains hidden
                 generatePostsBtn.textContent = 'Generar Posts';
                 break;
         }
@@ -479,6 +494,171 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
             togglePostLoading(false);
         }
     };
+    
+    // --- Niche System Logic ---
+    const nicheData = [
+        { niche: "Humor y Entretenimiento", subniches: [
+            { name: "Humor cotidiano", microtemas: ["vida diaria", "tráfico", "familia", "suegros", "memes de WhatsApp", "conversaciones graciosas"] },
+            { name: "Humor de pareja", microtemas: ["celos", "vida en pareja", "conversaciones graciosas", "expectativa vs realidad"] },
+            { name: "Humor laboral", microtemas: ["jefes tóxicos", "compañeros de trabajo", "reuniones inútiles", "lunes por la mañana"] },
+            { name: "Humor escolar", microtemas: ["tareas", "maestros", "exámenes"] },
+            { name: "Humor negro / sarcástico", microtemas: ["sarcasmo", "ironía", "humor ácido", "crítica social"] },
+            { name: "Humor de situaciones absurdas", microtemas: ["cosas sin sentido", "mala suerte", "momentos incómodos"] }
+        ]},
+        { niche: "Drama y Confesiones", subniches: [
+            { name: "Confesiones anónimas", microtemas: ["infidelidad", "secretos", "arrepentimiento", "venganza", "traición"] },
+            { name: "Historias reales impactantes", microtemas: ["superación", "karma", "lecciones de vida", "abandono"] },
+            { name: "Problemas de pareja", microtemas: ["discusiones", "ruptura", "celos", "traición", "reconciliación"] },
+            { name: "Reflexiones personales", microtemas: ["soledad", "cambio de vida", "superación", "errores del pasado", "arrepentimiento"] },
+            { name: "Secretos familiares", microtemas: ["herencias", "conflictos familiares", "revelaciones", "traición familiar"] }
+        ]},
+        { niche: "Relación y Pareja", subniches: [
+            { name: "Amor y desamor", microtemas: ["indirectas de amor", "extrañar a alguien", "nuevo amor", "corazón roto", "crush"] },
+            { name: "Relaciones tóxicas", microtemas: ["manipulación", "banderas rojas", "amor propio", "dejar ir", "celos"] },
+            { name: "Rupturas y reconciliaciones", microtemas: ["ex parejas", "relaciones fallidas", "volver con tu ex", "superar una ruptura"] },
+            { name: "Humor romántico", microtemas: ["cosas de novios", "citas graciosas", "ligar", "coqueteo", "WhatsApp"] },
+            { name: "Frases de amor / indirectas", microtemas: ["indirectas amorosas", "frases para dedicar", "poesía", "amor a distancia"] }
+        ]},
+        { niche: "Motivación y Superación", subniches: [
+            { name: "Frases motivacionales", microtemas: ["metas", "sueños", "nunca rendirse", "éxito", "disciplina", "caídas"] },
+            { name: "Historias inspiradoras", microtemas: ["superación personal", "casos de éxito", "cambio de vida", "resiliencia"] },
+            { name: "Desarrollo personal", microtemas: ["autoestima", "resiliencia", "crecimiento personal", "nuevos hábitos", "errores"] },
+            { name: "Emprendimiento emocional", microtemas: ["miedo al fracaso", "mentalidad de emprendedor", "logros", "inspiración"] }
+        ]},
+        { niche: "Polémica y Opinión Social", subniches: [
+            { name: "Debate social / feminismo / machismo", microtemas: ["feminismo", "machismo", "igualdad", "privilegios", "roles de género"] },
+            { name: "Crítica a la sociedad", microtemas: ["redes sociales", "influencers", "doble moral", "cultura moderna", "generaciones"] },
+            { name: "Tópicos controversiales", microtemas: ["política ligera", "religión", "temas tabú", "cancelación"] },
+            { name: "Opinión sobre noticias virales", microtemas: ["tendencias", "noticias del día", "chismes de famosos", "eventos actuales"] }
+        ]},
+        { niche: "Curiosidades y Datos Sorprendentes", subniches: [
+            { name: "Datos curiosos del cuerpo o la mente", microtemas: ["cerebro", "sueños", "psicología", "amor", "cuerpo humano"] },
+            { name: "Misterios y rarezas del mundo", microtemas: ["lugares abandonados", "casos sin resolver", "leyendas urbanas", "universo"] },
+            { name: "Curiosidades históricas o culturales", microtemas: ["historia", "culturas antiguas", "inventos", "tradiciones raras"] },
+            { name: "Tecnología y descubrimientos", microtemas: ["inteligencia artificial", "apps virales", "gadgets", "futuro", "ciencia curiosa", "TikTok"] }
+        ]},
+        { niche: "Emocional y Reflexivo", subniches: [
+            { name: "Historias con moraleja", microtemas: ["lecciones de vida", "errores", "aprendizaje", "gratitud"] },
+            { name: "Frases para pensar", microtemas: ["tiempo", "vida", "decisiones", "madurez", "familia", "soledad", "cambios"] },
+            { name: "Reflexiones sobre la vida", microtemas: ["el paso del tiempo", "el propósito", "la felicidad", "el dolor"] },
+            { name: "Historias anónimas con enseñanza", microtemas: ["superación", "perdón", "resiliencia", "amor propio"] }
+        ]},
+        { niche: "Sarcasmo e Ironía", subniches: [
+            { name: "Frases sarcásticas", microtemas: ["trabajo", "relaciones", "vida adulta", "hipocresía", "dinero", "redes sociales"] },
+            { name: "Situaciones irónicas", microtemas: ["mala suerte", "expectativa vs realidad", "karma instantáneo"] },
+            { name: "Crítica disfrazada de humor", microtemas: ["redes sociales", "política ligera", "tendencias absurdas", "amistades falsas", `"yo no pero sí"`] }
+        ]},
+        { niche: "Doble Sentido y Picante", subniches: [
+            { name: "Humor con malicia", microtemas: ["fiesta", "ligues", "coqueteo", "indirectas picantes", "frases con malicia"] },
+            { name: "Frases con doble interpretación", microtemas: ["albures ligeros", "juegos de palabras", "situaciones ambiguas"] },
+            { name: "Entrevistas o situaciones picarescas", microtemas: ["reacciones", "preguntas incómodas", "momentos atrevidos"] }
+        ]},
+        { niche: "Cotidiano / Vida Real", subniches: [
+            { name: "Vida doméstica", microtemas: ["lavar trastes", "limpieza", "cocinar", "mascotas"] },
+            { name: "Trabajo", microtemas: ["jefes", "compañeros", "reuniones", "sueldos", "cansancio"] },
+            { name: "Escuela", microtemas: ["tareas", "maestros", "exámenes", "clases en línea"] },
+            { name: "Adulting (vida adulta)", microtemas: ["pagar cuentas", "responsabilidades", "despertarse temprano", "tráfico", "lunes", "rutinas"] }
+        ]},
+        { niche: "Tecnología y Actualidad", subniches: [
+            { name: "IA y apps virales", microtemas: ["inteligencia artificial", "ChatGPT", "Gemini", "TikTok", "reels"] },
+            { name: "Tendencias digitales", microtemas: ["nuevas redes sociales", "memes del momento", "retos virales"] },
+            { name: "Tutoriales rápidos", microtemas: ["hacks tecnológicos", "trucos para celular", "herramientas útiles"] },
+            { name: "Noticias tech", microtemas: ["lanzamientos", "gadgets", "innovaciones", "el futuro de la tecnología"] }
+        ]},
+        { niche: "Deportes y Fútbol", subniches: [
+            { name: "Fútbol (principalmente)", microtemas: ["Messi", "Cristiano", "clásico", "ligas", "polémicas", "jugadas"] },
+            { name: "Deportes virales", microtemas: ["momentos épicos", "fails deportivos", "nuevos deportes"] },
+            { name: "Humor deportivo", microtemas: ["memes de fútbol", "reacciones de fans", "burlas entre equipos"] },
+            { name: "Opiniones y debates", microtemas: ["el mejor jugador", "polémicas arbitrales", "fanatismo", "frases de fútbol"] }
+        ]},
+        { niche: "Espiritualidad y Energía", subniches: [
+            { name: "Energías, karma, vibras", microtemas: ["energías negativas", "karma instantáneo", "buenas vibras", "destino"] },
+            { name: "Ley de atracción", microtemas: ["manifestación", "decretos", "visualización", "alineación espiritual"] },
+            { name: "Signos zodiacales", microtemas: ["horóscopo", "compatibilidad zodiacal", "mercurio retrógrado", "características de signos"] }
+        ]},
+        { niche: "Belleza y Autoestima", subniches: [
+            { name: "Cuidado personal", microtemas: ["skincare", "maquillaje", "rutinas de belleza", "consejos"] },
+            { name: "Autoaceptación", microtemas: ["amor propio", "aceptar tu cuerpo", "inseguridades", "comparación"] },
+            { name: "Belleza emocional", microtemas: ["sentirse bien", "confianza", "glow up", "belleza interior"] },
+            { name: "Frases de amor propio", microtemas: ["empoderamiento", "autoestima", "poner límites", "estilo"] }
+        ]},
+        { niche: "Familia y Amistad", subniches: [
+            { name: "Frases familiares", microtemas: ["mamá", "papá", "hermanos", "abuelos", "familia es primero"] },
+            { name: "Historias entre padres e hijos", microtemas: ["anécdotas de la infancia", "consejos familiares", "conflictos generacionales"] },
+            { name: "Amistades verdaderas o falsas", microtemas: ["amigos verdaderos", "amistades tóxicas", "amigos traicioneros", "lealtad"] }
+        ]},
+        { niche: "Cultura Pop y Entretenimiento", subniches: [
+            { name: "Series y películas", microtemas: ["Netflix", "estrenos", "personajes", "frases de películas", "telenovelas"] },
+            { name: "Famosos y chismes", microtemas: ["escándalos", "nuevas parejas", "noticias de artistas", "cultura mexicana"] },
+            { name: "Música y trends", microtemas: ["trends de TikTok", "artistas del momento", "conciertos", "nostalgia noventera"] }
+        ]},
+        { niche: "Animales y Mascotas", subniches: [
+            { name: "Memes de animales", microtemas: ["perros graciosos", "gatos haciendo cosas raras", "animales inesperados"] },
+            { name: "Historias tiernas o tristes", microtemas: ["rescates", "adopciones", "animales ayudando a humanos"] },
+            { name: "Reacciones graciosas", microtemas: ["comportamientos curiosos", "“cuando mi perro me ignora”", "mascotas siendo dramáticas"] }
+        ]},
+        { niche: "Terror y Misterio", subniches: [
+            { name: "Historias paranormales", microtemas: ["fantasmas", "experiencias personales", "casas embrujadas"] },
+            { name: "Leyendas urbanas", microtemas: ["mitos populares", "historias de terror locales", "criaturas misteriosas"] },
+            { name: "Casos inexplicables", microtemas: ["sucesos reales", "videos misteriosos", "desapariciones", "teorías de conspiración"] }
+        ]},
+        { niche: "Estilo de Vida / Lifestyle", subniches: [
+            { name: "Vida moderna", microtemas: ["rutina diaria", "estrés", "equilibrio mental", "ansiedad social"] },
+            { name: "Minimalismo", microtemas: ["vivir con menos", "orden y limpieza", "consumismo", "paz mental"] },
+            { name: "Tendencias sociales", microtemas: ["nuevas modas", "viajes", "productividad", "bienestar", "redes sociales"] }
+        ]},
+        { niche: "Finanzas y Dinero", subniches: [
+            { name: "Finanzas personales", microtemas: ["deudas", "ahorro", "inversiones para principiantes", "presupuesto"] },
+            { name: "Emprendimiento digital", microtemas: ["ideas de negocio", "side hustles", "marketing digital", "trabajo remoto"] },
+            { name: "Crítica al sistema económico", microtemas: ["sueldos", "comparación social", "“cómo sobrevivo con $100”", "la carrera de la rata"] }
+        ]}
+    ];
+    
+    const populateNiches = () => {
+        nicheSelectorContainer.innerHTML = '';
+        nicheData.forEach(item => {
+            const button = document.createElement('button');
+            button.className = 'niche-btn';
+            button.textContent = item.niche;
+            button.dataset.niche = item.niche;
+            nicheSelectorContainer.appendChild(button);
+        });
+    };
+    
+    const populateSubniches = (nicheName) => {
+        const selectedNiche = nicheData.find(n => n.niche === nicheName);
+        subnicheSelector.innerHTML = '';
+        if (selectedNiche) {
+            selectedNiche.subniches.forEach(subniche => {
+                const button = document.createElement('button');
+                button.className = 'subniche-btn';
+                button.textContent = subniche.name;
+                button.dataset.niche = nicheName;
+                button.dataset.subniche = subniche.name;
+                subnicheSelector.appendChild(button);
+            });
+            subnicheSelectorContainer.classList.remove('hidden');
+        } else {
+            subnicheSelectorContainer.classList.add('hidden');
+        }
+    };
+    
+    const populateMicrothemes = (nicheName, subnicheName) => {
+        const selectedNiche = nicheData.find(n => n.niche === nicheName);
+        const selectedSubniche = selectedNiche?.subniches.find(s => s.name === subnicheName);
+        microthemeSuggestions.innerHTML = '';
+        if (selectedSubniche) {
+            selectedSubniche.microtemas.forEach(microtema => {
+                const button = document.createElement('button');
+                button.className = 'microtheme-btn';
+                button.textContent = microtema;
+                microthemeSuggestions.appendChild(button);
+            });
+            microthemeSuggestionsContainer.classList.remove('hidden');
+        } else {
+            microthemeSuggestionsContainer.classList.add('hidden');
+        }
+    };
 
     // --- Event Listeners ---
     templateBtnFacebook.addEventListener('click', () => setActiveTemplate('facebook'));
@@ -541,10 +721,45 @@ Devuelve tu respuesta como un único objeto JSON válido, sin formato Markdown (
         }
     });
 
+    // Niche system event listeners (using event delegation)
+    nicheSelectorContainer.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.classList.contains('niche-btn')) {
+            nicheSelectorContainer.querySelectorAll('.niche-btn').forEach(btn => btn.classList.remove('active'));
+            target.classList.add('active');
+            populateSubniches(target.dataset.niche);
+            microthemeSuggestionsContainer.classList.add('hidden'); // Hide microthemes when niche changes
+        }
+    });
+
+    subnicheSelector.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.classList.contains('subniche-btn')) {
+            subnicheSelector.querySelectorAll('.subniche-btn').forEach(btn => btn.classList.remove('active'));
+            target.classList.add('active');
+            populateMicrothemes(target.dataset.niche, target.dataset.subniche);
+        }
+    });
+    
+    microthemeSuggestions.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.classList.contains('microtheme-btn')) {
+            const currentText = aiTopicInput.value.trim();
+            const newTerm = target.textContent;
+            if (currentText) {
+                aiTopicInput.value = `${currentText}, ${newTerm}`;
+            } else {
+                aiTopicInput.value = newTerm;
+            }
+        }
+    });
+
+
     // --- Initial Setup ---
     loadPostTemplateData();
     setActiveTemplate('facebook');
     switchPostGenMode('manual');
     updatePostFont();
     updateAiSuggestions(contentTypeSelector.value); // Set initial suggestion
+    populateNiches(); // Populate the niche system
 };
