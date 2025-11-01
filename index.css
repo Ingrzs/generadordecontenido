@@ -1035,6 +1035,61 @@ span[contenteditable="true"] {
     position: relative;
 }
 
+/* --- Niche Inspiration System --- */
+#niche-inspiration-container,
+#image-post-niche-inspiration-container {
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+#niche-inspiration-container.hidden,
+#image-post-niche-inspiration-container.hidden {
+    display: none;
+}
+#niche-inspiration-container h4,
+#image-post-niche-inspiration-container h4 {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+.inspiration-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.niche-btn, .subniche-btn, .microtheme-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background-color: #f9f9f9;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+.niche-btn:hover, .subniche-btn:hover, .microtheme-btn:hover {
+    background-color: #e9e9e9;
+    border-color: #ccc;
+}
+.niche-btn.active, .subniche-btn.active {
+    background-color: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+    font-weight: bold;
+}
+.microtheme-btn {
+    background-color: var(--message-out-bg);
+    border-color: #c9eab1;
+}
+.microtheme-btn:hover {
+    background-color: #d0f4b3;
+}
+
+
 /* --- Estilos Plantilla de Post (Genéricos) --- */
 .post-template {
     border: 1px solid #ccc;
