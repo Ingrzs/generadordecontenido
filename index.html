@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device--width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Contenido Falso</title>
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -839,7 +839,7 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <button data-mode="web">Basada en Web</button>
                             </div>
                         </div>
-                        <div id="st-structure-group" class="st-form-group hidden">
+                        <div id="st-structure-group" class="st-form-group">
                             <label for="st-structure-selector">Estructura de la Confesión</label>
                             <div id="st-structure-selector" class="st-segmented-control">
                                 <button data-structure="dilema_consejo" class="active">Dilema / Pide Consejo</button>
@@ -847,8 +847,26 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <button data-structure="desahogo">Desahogo Personal</button>
                             </div>
                         </div>
+
+                        <!-- Controles específicos para el modo "Basada en Web" -->
+                        <div id="st-web-mode-controls" class="hidden">
+                            <div class="st-form-group">
+                                <label for="st-niche-select">Nicho de Contenido</label>
+                                <select id="st-niche-select">
+                                    <option value="fama_lujos">Fama de Lujos (Celebridades)</option>
+                                    <option value="cinefilo_curioso">Cinéfilo Curioso (Películas)</option>
+                                </select>
+                            </div>
+                             <div class="st-form-group">
+                                <label for="st-story-angle-select">Ángulo de la Historia</label>
+                                <select id="st-story-angle-select">
+                                    <!-- Opciones se llenarán dinámicamente -->
+                                </select>
+                            </div>
+                        </div>
+                        
                         <div id="st-date-filter-group" class="st-form-group hidden">
-                            <label for="st-date-filter">Periodo de Búsqueda (para Tendencias)</label>
+                            <label for="st-date-filter">Periodo de Búsqueda</label>
                             <select id="st-date-filter">
                                 <option value="any">Cualquier Fecha</option>
                                 <option value="hour">Última Hora</option>
@@ -857,7 +875,7 @@ _blank">Obtén tu clave aquí.</a></p>
                                 <option value="before_yesterday">Antier</option>
                             </select>
                         </div>
-                        <div class="st-form-group">
+                        <div id="st-generic-tone-group" class="st-form-group">
                             <label for="st-tone-select">Tono de la Narrativa</label>
                             <select id="st-tone-select">
                                <optgroup label="🔥 TONOS COMBINADOS (Top 10)">
