@@ -6,8 +6,16 @@ export const initStoriesGenerator = () => {
     const modeSelector = document.getElementById('st-mode-selector');
     const structureGroup = document.getElementById('st-structure-group');
     const structureSelector = document.getElementById('st-structure-selector');
+    
+    // Web-based mode controls
+    const webModeControls = document.getElementById('st-web-mode-controls');
+    const nicheSelect = document.getElementById('st-niche-select');
+    const storyAngleSelect = document.getElementById('st-story-angle-select');
     const dateFilterGroup = document.getElementById('st-date-filter-group');
     const dateFilterSelect = document.getElementById('st-date-filter');
+
+    // Generic controls
+    const genericToneGroup = document.getElementById('st-generic-tone-group');
     const toneSelect = document.getElementById('st-tone-select');
     const reactionSelect = document.getElementById('st-reaction-select');
     const lengthSelector = document.getElementById('st-length-selector');
@@ -33,6 +41,23 @@ export const initStoriesGenerator = () => {
     let lastGeneratedStory = ''; // To request a different story on the same topic
     let lastTopic = ''; // To track the last used topic
 
+    const webStoryAngles = {
+        fama_lujos: [
+            { value: 'pobreza_riqueza', text: 'De la Pobreza a la Riqueza (o Viceversa)' },
+            { value: 'detras_exito', text: 'Detrás del Éxito (Entrevista / Confesión)' },
+            { value: 'lado_oscuro', text: 'El Lado Oscuro de la Fama (Polémicas)' },
+            { value: 'anecdota_inspiradora', text: 'Anécdota Inspiradora / Lección de Vida' },
+            { value: 'dato_curioso', text: 'Dato Curioso / Secreto Revelado' }
+        ],
+        cinefilo_curioso: [
+            { value: 'detras_camaras', text: 'Detrás de Cámaras (Secretos de Filmación)' },
+            { value: 'casting_alternativo', text: 'El Papel que Casi Fue (Casting Alternativo)' },
+            { value: 'transformacion_actor', text: 'La Transformación del Actor' },
+            { value: 'historia_real', text: 'La Historia Real detrás de la Película' },
+            { value: 'easter_eggs', text: 'Detalles Ocultos / Easter Eggs' }
+        ]
+    };
+
     // --- NEW: Strategy Map for Suggestions ---
     const storyStrategyMap = {
         'desahogo': {
@@ -52,7 +77,7 @@ export const initStoriesGenerator = () => {
             tone: 'emotional_reflective',
             reaction: 'provocar una reflexión profunda'
         },
-        'web': {
+        'web': { // This is a fallback, the new system is more specific
             tone: 'curious_emotional',
             reaction: 'crear suspense y curiosidad'
         }
@@ -60,6 +85,18 @@ export const initStoriesGenerator = () => {
 
 
     // --- Functions ---
+    const populateStoryAngles = () => {
+        const niche = nicheSelect.value;
+        const angles = webStoryAngles[niche] || [];
+        storyAngleSelect.innerHTML = '';
+        angles.forEach(angle => {
+            const option = document.createElement('option');
+            option.value = angle.value;
+            option.textContent = angle.text;
+            storyAngleSelect.appendChild(option);
+        });
+    };
+
     const updateStorySuggestions = (type) => {
         const strategy = storyStrategyMap[type];
         if (strategy) {
@@ -125,11 +162,11 @@ export const initStoriesGenerator = () => {
         let finalPrompt;
         let config = {};
         const reactionValue = reactionSelect.value;
-        const tone = getToneInstruction(toneSelect.value);
         const length = getLengthInstruction(currentLength);
         const topic = topicInput.value.trim();
 
         if (currentMode === 'chisme') {
+            const tone = getToneInstruction(toneSelect.value);
             const topicInstruction = topic 
                 ? `La confesión debe girar en torno al siguiente tema: "${topic}".`
                 : "Si no se proporciona un tema, inventa uno relacionado con situaciones cotidianas y relaciones personales (familia, amigos, pareja, trabajo).";
@@ -182,6 +219,7 @@ Crea una confesión COMPLETAMENTE NUEVA Y ORIGINAL que siga los parámetros y re
 El resultado final debe ser únicamente el texto de la historia, sin explicaciones adicionales.`;
 
         } else if (currentMode === 'inventada') {
+            const tone = getToneInstruction(toneSelect.value);
             const nicheInstruction = topic 
                 ? `El contenido será para el nicho "${topic}".`
                 : "Como no se especificó un tema, elige tú uno que sea emocional, humano y cercano a un público de 20 a 45 años (ejemplos: superar un miedo, la importancia de la amistad, una anécdota de viaje inesperada).";
@@ -202,11 +240,37 @@ y su objetivo será ${reactionValue}.
 El resultado debe ser únicamente el texto de la historia, sin títulos, explicaciones, ni saludos.`;
 
         } else { // web mode
+            const niche = nicheSelect.value;
+            const angle = storyAngleSelect.value;
+
             let topicInstruction;
             if (topic) {
                 topicInstruction = `sobre el tema: "${topic}"`;
             } else {
-                topicInstruction = `sobre un tema aleatorio que elijas. Puede ser una celebridad, un evento histórico, un lugar famoso, o una anécdota científica interesante. ¡Sorpréndeme!`;
+                topicInstruction = `sobre un tema aleatorio que elijas y que sea relevante para el nicho y ángulo seleccionados. ¡Sorpréndeme!`;
+            }
+
+            let nicheContextInstruction;
+            let angleInstruction;
+            
+            if (niche === 'fama_lujos') {
+                nicheContextInstruction = "Tu investigación y narrativa deben centrarse en la vida personal o profesional de la celebridad o figura pública.";
+                switch (angle) {
+                    case 'pobreza_riqueza': angleInstruction = "Busca y narra historias sobre sus orígenes humildes, cómo consiguieron su fortuna, o si tuvieron reveses económicos importantes."; break;
+                    case 'detras_exito': angleInstruction = "Busca fragmentos de entrevistas o anécdotas donde revelen un secreto, un sacrificio o un momento clave de su carrera."; break;
+                    case 'lado_oscuro': angleInstruction = "Enfócate en buscar escándalos, momentos controversiales o las dificultades que enfrentaron por ser famosos."; break;
+                    case 'anecdota_inspiradora': angleInstruction = "Busca historias donde hayan superado un obstáculo personal (no económico) y hayan dejado una enseñanza."; break;
+                    case 'dato_curioso': angleInstruction = "Busca hechos poco conocidos, talentos ocultos o detalles sorprendentes sobre su vida."; break;
+                }
+            } else { // cinefilo_curioso
+                 nicheContextInstruction = "Tu investigación y narrativa deben centrarse en el contexto de la producción de la película, serie o en la actuación de los involucrados.";
+                switch (angle) {
+                    case 'detras_camaras': angleInstruction = "Busca anécdotas sobre la producción de la película, improvisaciones de actores, problemas en el set o cómo se filmó una escena icónica."; break;
+                    case 'casting_alternativo': angleInstruction = "Busca qué otros actores famosos fueron considerados para un papel principal y por qué no lo obtuvieron."; break;
+                    case 'transformacion_actor': angleInstruction = "Enfócate en el increíble cambio físico o mental que un actor tuvo que hacer para un papel específico."; break;
+                    case 'historia_real': angleInstruction = "Busca los hechos verídicos o las personas reales que inspiraron la trama de la película o serie."; break;
+                    case 'easter_eggs': angleInstruction = "Busca referencias escondidas, cameos o 'easter eggs' dentro de la película que los fans podrían haber pasado por alto."; break;
+                }
             }
 
             let varietyInstruction = '';
@@ -229,11 +293,13 @@ ${lastGeneratedStory}
                 case 'any': default: dateInstruction = ''; break;
             }
 
-            finalPrompt = `Actúa como un storyteller experto y creador de contenido viral para redes sociales. Tu especialidad es transformar información de la web (artículos, entrevistas, videos de YouTube) en relatos cortos y cautivadores.
+            finalPrompt = `Actúa como un storyteller experto y creador de contenido viral para redes sociales. Tu especialidad es transformar información de la web en relatos cortos y cautivadores.
 
 **TAREA PRINCIPAL:**
-1.  **Investiga:** Realiza una búsqueda exhaustiva en Google ${topicInstruction}${dateInstruction}. Busca anécdotas personales, datos "detrás de cámaras", hechos sorprendentes o entrevistas reveladoras.
-2.  **Crea un Relato:** Basado en la información más interesante que encuentres, escribe una historia original que siga el estilo y formato de los ejemplos de referencia.
+1.  **Investiga:** Realiza una búsqueda exhaustiva en Google ${topicInstruction}${dateInstruction}.
+2.  **Enfócate:** ${nicheContextInstruction}
+3.  **Aplica el Ángulo:** ${angleInstruction}
+4.  **Crea un Relato:** Basado en la información más interesante que encuentres, escribe una historia original que siga el estilo y formato de los ejemplos de referencia.
 ${varietyInstruction}
 **EJEMPLOS DE REFERENCIA (ESTILO A IMITAR OBLIGATORIAMENTE):**
 *   > 🎭 “El día que cambiaron a Marty McFly, pensé que no podría hacerlo otra vez.”
@@ -242,8 +308,6 @@ ${varietyInstruction}
 *   > 😢🎙“Antes de entrar a La Academia vivía en una bodega prestada porque mi departamento se había incendiado. No podía ni bañarme. Yo era un cantante de bares. Todo cambió cuando el casting de La Academia se realizó justo arriba de uno de los bares donde yo cantaba. Mis amigos me insistieron en que fuera… lo hice, y mi vida cambió para siempre.”
     > "Entré a La Academia en 2002, pero no fue una historia normal. Unas semanas antes mi vida se había incendiado… literalmente. El departamento donde vivía con mi hijo Tristan, en Playas de Tijuana, se quemó por completo. Nos quedamos sin nada: sin ropa, sin instrumentos, sin un techo. Dormía donde podía, y un amigo me prestó una bodega para vivir. Ahí puse una alfombra, unas cajas de madera como burós y un colchón inflable. Me bañaba en casa de amigos, y usaba los baños de un bar abierto 24 horas frente a la Revolución. Fue una etapa durísima, pero seguía con la fe de que algo bueno iba a pasar.”
     > 👉 Yahir sobre cómo, tras perderlo todo en un incendio, terminó entrando a La Academia sin haber sido seleccionado oficialmente.
-*   > 👉🌌“Mis padres nunca usaron la religión como am ena* za o advertencia. En casa no se hablaba de ‘Dios te está mirando’... al cumplir ocho años, las enseñanzas religiosas comenzaron a parecerme menos convincentes… y un año después, cuando entré por primera vez a un planetario, el universo me descubrió a mí. Desde entonces, no sentí que mi fe evolucionara: simplemente se transformó en curiosidad.”
-    > 👉 Neil deGrasse Tyson, sobre cómo la ciencia no destruyó su curiosidad espiritual, sino que la llevó a un terreno más amplio y consciente.
 
 **REGLAS DE FORMATO Y ESTILO (MUY ESTRUCTURADO):**
 1.  **Inicio (Hook):** Comienza siempre con un emoji relevante seguido de una frase corta, impactante y entre comillas que sirva como gancho. Ejemplo: \`🎭 “El día que cambiaron a Marty McFly...”\`
@@ -255,7 +319,6 @@ ${varietyInstruction}
 3.  **Cierre (Atribución):** Termina siempre la historia con una línea de atribución que siga este formato: \`[Emoji] [Nombre de la persona o fuente] sobre [breve descripción del contexto]\`. Ejemplo: \`🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz...\`
 4.  **Parámetros Adicionales:**
     *   La historia debe ser ${length}.
-    *   El tono general debe ser ${tone}.
     *   El objetivo es ${reactionValue}.
 
 **SALIDA FINAL:**
@@ -371,20 +434,23 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             currentMode = button.dataset.mode;
             modeSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            dateFilterGroup.classList.toggle('hidden', currentMode !== 'web');
+            
+            const isWebMode = currentMode === 'web';
+            dateFilterGroup.classList.toggle('hidden', !isWebMode);
+            webModeControls.classList.toggle('hidden', !isWebMode);
+            genericToneGroup.classList.toggle('hidden', isWebMode);
             structureGroup.classList.toggle('hidden', currentMode !== 'chisme');
-
-            // Update suggestions based on the new mode
+            
             if (currentMode === 'chisme') {
                 const activeStructureBtn = structureSelector.querySelector('button.active');
-                if (activeStructureBtn) {
-                    updateStorySuggestions(activeStructureBtn.dataset.structure);
-                }
+                if (activeStructureBtn) updateStorySuggestions(activeStructureBtn.dataset.structure);
             } else {
                 updateStorySuggestions(currentMode);
             }
         }
     });
+
+    nicheSelect.addEventListener('change', populateStoryAngles);
 
     structureSelector.addEventListener('click', (e) => {
         const button = e.target.closest('button');
@@ -392,7 +458,6 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
             currentStructure = button.dataset.structure;
             structureSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            // Update suggestions based on the new structure
             updateStorySuggestions(currentStructure);
         }
     });
@@ -452,6 +517,7 @@ El resultado final debe ser únicamente el texto de la historia, siguiendo todas
     });
 
     // --- Init ---
+    populateStoryAngles();
     modeSelector.querySelector(`button[data-mode="${currentMode}"]`).click();
     structureSelector.querySelector(`button[data-structure="${currentStructure}"]`).click();
     lengthSelector.querySelector(`button[data-length="${currentLength}"]`).click();
