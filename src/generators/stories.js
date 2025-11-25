@@ -55,6 +55,18 @@ export const initStoriesGenerator = () => {
             { value: 'transformacion_actor', text: 'La Transformación del Actor' },
             { value: 'historia_real', text: 'La Historia Real detrás de la Película' },
             { value: 'easter_eggs', text: 'Detalles Ocultos / Easter Eggs' }
+        ],
+        mundo_curioso: [
+            { value: 'animales_sorprendentes', text: 'Animales sorprendentes' },
+            { value: 'misterios_reales', text: 'Misterios reales' },
+            { value: 'coincidencias_increibles', text: 'Coincidencias increíbles' },
+            { value: 'curiosidades_historicas', text: 'Curiosidades históricas' },
+            { value: 'ciencia_curiosa', text: 'Ciencia curiosa del día a día' },
+            { value: 'cultura_tradiciones', text: 'Cultura y tradiciones extrañas del mundo' },
+            { value: 'naturaleza_extrema', text: 'Naturaleza extrema' },
+            { value: 'tecnologia_sorprendente', text: 'Tecnología sorprendente' },
+            { value: 'historias_humanas', text: 'Historias humanas reales y emocionantes' },
+            { value: 'hechos_absurdos', text: 'Hechos absurdos del mundo' }
         ]
     };
 
@@ -243,87 +255,127 @@ El resultado debe ser únicamente el texto de la historia, sin títulos, explica
             const niche = nicheSelect.value;
             const angle = storyAngleSelect.value;
 
-            let topicInstruction;
-            if (topic) {
-                topicInstruction = `sobre el tema: "${topic}"`;
-            } else {
-                topicInstruction = `sobre un tema aleatorio que elijas y que sea relevante para el nicho y ángulo seleccionados. ¡Sorpréndeme!`;
-            }
-
-            let nicheContextInstruction;
-            let angleInstruction;
-            
-            if (niche === 'fama_lujos') {
-                nicheContextInstruction = "Tu investigación y narrativa deben centrarse en la vida personal o profesional de la celebridad o figura pública.";
-                switch (angle) {
-                    case 'pobreza_riqueza': angleInstruction = "Busca y narra historias sobre sus orígenes humildes, cómo consiguieron su fortuna, o si tuvieron reveses económicos importantes."; break;
-                    case 'detras_exito': angleInstruction = "Busca fragmentos de entrevistas o anécdotas donde revelen un secreto, un sacrificio o un momento clave de su carrera."; break;
-                    case 'lado_oscuro': angleInstruction = "Enfócate en buscar escándalos, momentos controversiales o las dificultades que enfrentaron por ser famosos."; break;
-                    case 'anecdota_inspiradora': angleInstruction = "Busca historias donde hayan superado un obstáculo personal (no económico) y hayan dejado una enseñanza."; break;
-                    case 'dato_curioso': angleInstruction = "Busca hechos poco conocidos, talentos ocultos o detalles sorprendentes sobre su vida."; break;
+            if (niche === 'mundo_curioso') {
+                const angleText = storyAngleSelect.options[storyAngleSelect.selectedIndex].text;
+                const specificTopic = topic ? topic : "Un caso real y viral reciente";
+                
+                let varietyInstruction = '';
+                if (topic && topic.toLowerCase() === lastTopic.toLowerCase() && lastGeneratedStory) {
+                    varietyInstruction = `
+IMPORTANTE: Ya me contaste una historia sobre este tema. Ahora, busca y cuéntame una anécdota o un dato COMPLETAMENTE DIFERENTE sobre el mismo tema si es posible, o sobre otro relacionado dentro del mismo nicho.`;
                 }
-            } else { // cinefilo_curioso
-                 nicheContextInstruction = "Tu investigación y narrativa deben centrarse en el contexto de la producción de la película, serie o en la actuación de los involucrados.";
-                switch (angle) {
-                    case 'detras_camaras': angleInstruction = "Busca anécdotas sobre la producción de la película, improvisaciones de actores, problemas en el set o cómo se filmó una escena icónica."; break;
-                    case 'casting_alternativo': angleInstruction = "Busca qué otros actores famosos fueron considerados para un papel principal y por qué no lo obtuvieron."; break;
-                    case 'transformacion_actor': angleInstruction = "Enfócate en el increíble cambio físico o mental que un actor tuvo que hacer para un papel específico."; break;
-                    case 'historia_real': angleInstruction = "Busca los hechos verídicos o las personas reales que inspiraron la trama de la película o serie."; break;
-                    case 'easter_eggs': angleInstruction = "Busca referencias escondidas, cameos o 'easter eggs' dentro de la película que los fans podrían haber pasado por alto."; break;
-                }
-            }
 
-            let varietyInstruction = '';
-            if (topic && topic.toLowerCase() === lastTopic.toLowerCase() && lastGeneratedStory) {
-                varietyInstruction = `
-IMPORTANTE: Ya me contaste una historia sobre este tema. Ahora, busca y cuéntame una anécdota o un dato COMPLETAMENTE DIFERENTE. No repitas la siguiente historia:
----
-${lastGeneratedStory}
----
-`;
-            }
+                finalPrompt = `Actúa como el redactor principal de la página viral "Mundo Curioso".
+Genera una historia larga, escrita como publicación de Facebook para una página llamada Mundo Curioso. La historia debe ser atrapante desde la primera línea, fácil de leer, con un tono misterioso, emocional, sorprendente o reflexivo según el nicho elegido. No uses lenguaje técnico; hazlo accesible y humano.
 
-            const dateFilterValue = dateFilterSelect.value;
-            let dateInstruction = '';
-            switch(dateFilterValue) {
-                case 'hour': dateInstruction = ' que ocurrieron en la última hora'; break;
-                case 'today': dateInstruction = ' que ocurrieron hoy (en las últimas 24 horas)'; break;
-                case 'yesterday': dateInstruction = ' que ocurrieron ayer'; break;
-                case 'before_yesterday': dateInstruction = ' que ocurrieron antier'; break;
-                case 'any': default: dateInstruction = ''; break;
-            }
+Quiero que la historia esté basada en el siguiente nicho: ${angleText}, y que el tema principal sea: ${specificTopic}.
 
-            finalPrompt = `Actúa como un storyteller experto y creador de contenido viral para redes sociales. Tu especialidad es transformar información de la web en relatos cortos y cautivadores.
+**Instrucciones de Investigación:**
+1. Realiza una búsqueda en Google para encontrar información veraz y sorprendente sobre este tema.
+2. No inventes datos científicos falsos; si es un misterio, deja elementos en duda pero basados en reportes reales.
 
-**TAREA PRINCIPAL:**
-1.  **Investiga:** Realiza una búsqueda exhaustiva en Google ${topicInstruction}${dateInstruction}.
-2.  **Enfócate:** ${nicheContextInstruction}
-3.  **Aplica el Ángulo:** ${angleInstruction}
-4.  **Crea un Relato:** Basado en la información más interesante que encuentres, escribe una historia original que siga el estilo y formato de los ejemplos de referencia.
+**Estructura OBLIGATORIA:**
+1. **Hook fuerte** que atrape en la primera frase (con emojis).
+2. **Breve contexto** de la situación, persona, animal o suceso.
+3. **Detalle de lo que ocurrió:** emociones, sensaciones, hechos curiosos o misteriosos.
+4. **Momento clave** que cause sorpresa, duda, miedo, ternura o reflexión.
+5. **Cierre con mensaje**, moraleja o pregunta final para generar comentarios.
+
+**Reglas de Estilo:**
+- Longitud: mínimo 5–7 párrafos.
+- Estilo claro, directo, emocional y muy compartible.
+- Usa un lenguaje que conecte emocionalmente, estilo ‘historia que te deja pensando’.
+- Al final añade una pregunta polémica o reflexiva para aumentar el engagement.
 ${varietyInstruction}
-**EJEMPLOS DE REFERENCIA (ESTILO A IMITAR OBLIGATORIAMENTE):**
-*   > 🎭 “El día que cambiaron a Marty McFly, pensé que no podría hacerlo otra vez.”
-    > "Cuando empezamos a filmar Back to the Future, había otro actor interpretando a Marty: Eric Stoltz. Rodamos durante seis semanas enteras con él. Una noche, a la 1 de la mañana, nos llamaron a todos los del elenco a un tráiler. Ahí estaba Spielberg. Nos anunció que Stoltz salía del proyecto, y que entrarían con Michael J. Fox. Yo me quedé helado. Había trabajado tanto en encontrar el ritmo de Doc, en conectar con esa energía, que pensé: “No voy a poder hacerlo otra vez.” Pero en cuanto Michael llegó, todo fluyó. Desde la primera escena, hubo una química instantánea, natural, sin esfuerzo. A veces, los grandes cambios que más miedo dan… son justo los que terminan salvando una historia."
-    > 🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz por Michael J. Fox en Back to the Future.
-*   > 😢🎙“Antes de entrar a La Academia vivía en una bodega prestada porque mi departamento se había incendiado. No podía ni bañarme. Yo era un cantante de bares. Todo cambió cuando el casting de La Academia se realizó justo arriba de uno de los bares donde yo cantaba. Mis amigos me insistieron en que fuera… lo hice, y mi vida cambió para siempre.”
-    > "Entré a La Academia en 2002, pero no fue una historia normal. Unas semanas antes mi vida se había incendiado… literalmente. El departamento donde vivía con mi hijo Tristan, en Playas de Tijuana, se quemó por completo. Nos quedamos sin nada: sin ropa, sin instrumentos, sin un techo. Dormía donde podía, y un amigo me prestó una bodega para vivir. Ahí puse una alfombra, unas cajas de madera como burós y un colchón inflable. Me bañaba en casa de amigos, y usaba los baños de un bar abierto 24 horas frente a la Revolución. Fue una etapa durísima, pero seguía con la fe de que algo bueno iba a pasar.”
-    > 👉 Yahir sobre cómo, tras perderlo todo en un incendio, terminó entrando a La Academia sin haber sido seleccionado oficialmente.
 
-**REGLAS DE FORMATO Y ESTILO (MUY ESTRUCTURADO):**
-1.  **Inicio (Hook):** Comienza siempre con un emoji relevante seguido de una frase corta, impactante y entre comillas que sirva como gancho. Ejemplo: \`🎭 “El día que cambiaron a Marty McFly...”\`
-2.  **Cuerpo del Relato:**
-    *   Desarrolla la historia en párrafos cortos y fáciles de leer.
-    *   Usa un lenguaje 100% conversacional, coloquial y natural (español de México).
-    *   Integra emojis de forma natural para añadir emoción y contexto visual.
-    *   Enfócate en el aspecto humano o sorprendente del dato que encontraste. Transforma la información en una narrativa personal y emocional.
-3.  **Cierre (Atribución):** Termina siempre la historia con una línea de atribución que siga este formato: \`[Emoji] [Nombre de la persona o fuente] sobre [breve descripción del contexto]\`. Ejemplo: \`🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz...\`
-4.  **Parámetros Adicionales:**
-    *   La historia debe ser ${length}.
-    *   El objetivo es ${reactionValue}.
+El resultado final debe ser únicamente el texto de la historia.`;
+                
+                config = { tools: [{ googleSearch: {} }] };
 
-**SALIDA FINAL:**
-El resultado final debe ser únicamente el texto de la historia, siguiendo todas las reglas de formato, sin añadir explicaciones, títulos o saludos.`;
-            config = { tools: [{ googleSearch: {} }] };
+            } else {
+                // Logic for fame/luxury and cinephile niches
+                let topicInstruction;
+                if (topic) {
+                    topicInstruction = `sobre el tema: "${topic}"`;
+                } else {
+                    topicInstruction = `sobre un tema aleatorio que elijas y que sea relevante para el nicho y ángulo seleccionados. ¡Sorpréndeme!`;
+                }
+    
+                let nicheContextInstruction;
+                let angleInstruction;
+                
+                if (niche === 'fama_lujos') {
+                    nicheContextInstruction = "Tu investigación y narrativa deben centrarse en la vida personal o profesional de la celebridad o figura pública.";
+                    switch (angle) {
+                        case 'pobreza_riqueza': angleInstruction = "Busca y narra historias sobre sus orígenes humildes, cómo consiguieron su fortuna, o si tuvieron reveses económicos importantes."; break;
+                        case 'detras_exito': angleInstruction = "Busca fragmentos de entrevistas o anécdotas donde revelen un secreto, un sacrificio o un momento clave de su carrera."; break;
+                        case 'lado_oscuro': angleInstruction = "Enfócate en buscar escándalos, momentos controversiales o las dificultades que enfrentaron por ser famosos."; break;
+                        case 'anecdota_inspiradora': angleInstruction = "Busca historias donde hayan superado un obstáculo personal (no económico) y hayan dejado una enseñanza."; break;
+                        case 'dato_curioso': angleInstruction = "Busca hechos poco conocidos, talentos ocultos o detalles sorprendentes sobre su vida."; break;
+                    }
+                } else { // cinefilo_curioso
+                     nicheContextInstruction = "Tu investigación y narrativa deben centrarse en el contexto de la producción de la película, serie o en la actuación de los involucrados.";
+                    switch (angle) {
+                        case 'detras_camaras': angleInstruction = "Busca anécdotas sobre la producción de la película, improvisaciones de actores, problemas en el set o cómo se filmó una escena icónica."; break;
+                        case 'casting_alternativo': angleInstruction = "Busca qué otros actores famosos fueron considerados para un papel principal y por qué no lo obtuvieron."; break;
+                        case 'transformacion_actor': angleInstruction = "Enfócate en el increíble cambio físico o mental que un actor tuvo que hacer para un papel específico."; break;
+                        case 'historia_real': angleInstruction = "Busca los hechos verídicos o las personas reales que inspiraron la trama de la película o serie."; break;
+                        case 'easter_eggs': angleInstruction = "Busca referencias escondidas, cameos o 'easter eggs' dentro de la película que los fans podrían haber pasado por alto."; break;
+                    }
+                }
+    
+                let varietyInstruction = '';
+                if (topic && topic.toLowerCase() === lastTopic.toLowerCase() && lastGeneratedStory) {
+                    varietyInstruction = `
+    IMPORTANTE: Ya me contaste una historia sobre este tema. Ahora, busca y cuéntame una anécdota o un dato COMPLETAMENTE DIFERENTE. No repitas la siguiente historia:
+    ---
+    ${lastGeneratedStory}
+    ---
+    `;
+                }
+    
+                const dateFilterValue = dateFilterSelect.value;
+                let dateInstruction = '';
+                switch(dateFilterValue) {
+                    case 'hour': dateInstruction = ' que ocurrieron en la última hora'; break;
+                    case 'today': dateInstruction = ' que ocurrieron hoy (en las últimas 24 horas)'; break;
+                    case 'yesterday': dateInstruction = ' que ocurrieron ayer'; break;
+                    case 'before_yesterday': dateInstruction = ' que ocurrieron antier'; break;
+                    case 'any': default: dateInstruction = ''; break;
+                }
+    
+                finalPrompt = `Actúa como un storyteller experto y creador de contenido viral para redes sociales. Tu especialidad es transformar información de la web en relatos cortos y cautivadores.
+    
+    **TAREA PRINCIPAL:**
+    1.  **Investiga:** Realiza una búsqueda exhaustiva en Google ${topicInstruction}${dateInstruction}.
+    2.  **Enfócate:** ${nicheContextInstruction}
+    3.  **Aplica el Ángulo:** ${angleInstruction}
+    4.  **Crea un Relato:** Basado en la información más interesante que encuentres, escribe una historia original que siga el estilo y formato de los ejemplos de referencia.
+    ${varietyInstruction}
+    **EJEMPLOS DE REFERENCIA (ESTILO A IMITAR OBLIGATORIAMENTE):**
+    *   > 🎭 “El día que cambiaron a Marty McFly, pensé que no podría hacerlo otra vez.”
+        > "Cuando empezamos a filmar Back to the Future, había otro actor interpretando a Marty: Eric Stoltz. Rodamos durante seis semanas enteras con él. Una noche, a la 1 de la mañana, nos llamaron a todos los del elenco a un tráiler. Ahí estaba Spielberg. Nos anunció que Stoltz salía del proyecto, y que entrarían con Michael J. Fox. Yo me quedé helado. Había trabajado tanto en encontrar el ritmo de Doc, en conectar con esa energía, que pensé: “No voy a poder hacerlo otra vez.” Pero en cuanto Michael llegó, todo fluyó. Desde la primera escena, hubo una química instantánea, natural, sin esfuerzo. A veces, los grandes cambios que más miedo dan… son justo los que terminan salvando una historia."
+        > 🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz por Michael J. Fox en Back to the Future.
+    *   > 😢🎙“Antes de entrar a La Academia vivía en una bodega prestada porque mi departamento se había incendiado. No podía ni bañarme. Yo era un cantante de bares. Todo cambió cuando el casting de La Academia se realizó justo arriba de uno de los bares donde yo cantaba. Mis amigos me insistieron en que fuera… lo hice, y mi vida cambió para siempre.”
+        > "Entré a La Academia en 2002, pero no fue una historia normal. Unas semanas antes mi vida se había incendiado… literalmente. El departamento donde vivía con mi hijo Tristan, en Playas de Tijuana, se quemó por completo. Nos quedamos sin nada: sin ropa, sin instrumentos, sin un techo. Dormía donde podía, y un amigo me prestó una bodega para vivir. Ahí puse una alfombra, unas cajas de madera como burós y un colchón inflable. Me bañaba en casa de amigos, y usaba los baños de un bar abierto 24 horas frente a la Revolución. Fue una etapa durísima, pero seguía con la fe de que algo bueno iba a pasar.”
+        > 👉 Yahir sobre cómo, tras perderlo todo en un incendio, terminó entrando a La Academia sin haber sido seleccionado oficialmente.
+    
+    **REGLAS DE FORMATO Y ESTILO (MUY ESTRUCTURADO):**
+    1.  **Inicio (Hook):** Comienza siempre con un emoji relevante seguido de una frase corta, impactante y entre comillas que sirva como gancho. Ejemplo: \`🎭 “El día que cambiaron a Marty McFly...”\`
+    2.  **Cuerpo del Relato:**
+        *   Desarrolla la historia en párrafos cortos y fáciles de leer.
+        *   Usa un lenguaje 100% conversacional, coloquial y natural (español de México).
+        *   Integra emojis de forma natural para añadir emoción y contexto visual.
+        *   Enfócate en el aspecto humano o sorprendente del dato que encontraste. Transforma la información en una narrativa personal y emocional.
+    3.  **Cierre (Atribución):** Termina siempre la historia con una línea de atribución que siga este formato: \`[Emoji] [Nombre de la persona o fuente] sobre [breve descripción del contexto]\`. Ejemplo: \`🎬 Christopher Lloyd sobre el reemplazo de Eric Stoltz...\`
+    4.  **Parámetros Adicionales:**
+        *   La historia debe ser ${length}.
+        *   El objetivo es ${reactionValue}.
+    
+    **SALIDA FINAL:**
+    El resultado final debe ser únicamente el texto de la historia, siguiendo todas las reglas de formato, sin añadir explicaciones, títulos o saludos.`;
+                config = { tools: [{ googleSearch: {} }] };
+            }
         }
 
         try {
